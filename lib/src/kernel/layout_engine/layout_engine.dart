@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import '../unit_system/unit_system.dart';
 import 'alignment_mapper.dart';
+import 'layout_position.dart';
 
 /// Como o [LayoutEngine] organiza os filhos.
 enum LayoutDirection {
@@ -41,6 +42,10 @@ class LayoutItem extends StatelessWidget {
 /// `Expanded`/`Flexible` do desenvolvedor.
 ///
 /// Observações:
+/// - [position] posiciona o próprio motor dentro do pai; quando definida, o
+///   motor se ajusta ao conteúdo no eixo principal (a menos que `width`/
+///   `height` sejam declarados), senão ocuparia o pai inteiro e a posição
+///   não teria efeito visível;
 /// - usa `LayoutBuilder` para conhecer o pai (necessário para `pct` e `fr`),
 ///   portanto não suporta consultas de dimensão intrínseca (ex: dentro de
 ///   `IntrinsicHeight`);
@@ -51,6 +56,7 @@ class LayoutEngine extends StatelessWidget {
     super.key,
     required this.children,
     this.direction = LayoutDirection.vertical,
+    this.position,
     this.align = Alignment.topLeft,
     this.gap,
     this.width,
@@ -61,6 +67,9 @@ class LayoutEngine extends StatelessWidget {
 
   final List<Widget> children;
   final LayoutDirection direction;
+
+  /// Onde o motor fica dentro do pai. `null` deixa o pai decidir.
+  final LayoutPosition? position;
 
   /// Alinhamento do conteúdo dentro do motor. Em Column/Row vira
   /// main/cross axis alignment; em Stack é o alinhamento dos filhos.
@@ -101,12 +110,18 @@ class LayoutEngine extends StatelessWidget {
 
         final content = _buildContent(base, innerWidth, innerHeight);
 
-        if (resolvedWidth == null && resolvedHeight == null) return content;
-        return SizedBox(
-          width: resolvedWidth,
-          height: resolvedHeight,
-          child: content,
-        );
+        Widget result = content;
+        if (resolvedWidth != null || resolvedHeight != null) {
+          result = SizedBox(
+            width: resolvedWidth,
+            height: resolvedHeight,
+            child: content,
+          );
+        }
+
+        final placement = position;
+        if (placement == null) return result;
+        return Align(alignment: placement.alignment, child: result);
       },
     );
   }
@@ -138,16 +153,20 @@ class LayoutEngine extends StatelessWidget {
       items.add(_sizeChild(children[i], mainContext, vertical, canFlex));
     }
 
+    final mainSize =
+        position == null ? MainAxisSize.max : MainAxisSize.min;
     final mainAlign = mainAxisFromAlignment(vertical ? align.y : align.x);
     final crossAlign = crossAxisFromAlignment(vertical ? align.x : align.y);
 
     return vertical
         ? Column(
+            mainAxisSize: mainSize,
             mainAxisAlignment: mainAlign,
             crossAxisAlignment: crossAlign,
             children: items,
           )
         : Row(
+            mainAxisSize: mainSize,
             mainAxisAlignment: mainAlign,
             crossAxisAlignment: crossAlign,
             children: items,
