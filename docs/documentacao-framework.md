@@ -266,6 +266,7 @@ pubspec.yaml                       → versionamento semver desde o início
 | 9 | Unidade `fr` adicionada ao Unit System | Resolve divisão proporcional de espaço de forma automática, reutilizável além do `Grid` |
 | 10 | `Toggle` unifica Checkbox/Switch/Radio | Reduz quantidade de classes expostas |
 | 11 | Framework nasce como pacote reutilizável, com estrutura própria e versionamento | Evita retrabalho caso seja aproveitado além do projeto atual |
+| 12 | `position` (center, top, bottom, left, right e cantos) posiciona o próprio `Div`/`LayoutEngine` dentro do pai; `align` alinha apenas o conteúdo dentro dele | Separa "onde o Div fica" de "como o conteúdo se organiza"; com `position` definida o Div se ajusta ao conteúdo no eixo principal |
 
 ---
 
