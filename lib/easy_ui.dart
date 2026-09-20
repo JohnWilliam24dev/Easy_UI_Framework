@@ -6,3 +6,5 @@ library;
 
 export 'src/kernel/unit_system/unit_system.dart'
     show Dimension, Fr, Percent, Px, UnitNumExtension, Vh, Vw;
+export 'src/kernel/responsive/responsive.dart'
+    show Breakpoints, ResponsiveValue, ScreenSize;
