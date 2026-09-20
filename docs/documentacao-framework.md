@@ -267,6 +267,9 @@ pubspec.yaml                       → versionamento semver desde o início
 | 10 | `Toggle` unifica Checkbox/Switch/Radio | Reduz quantidade de classes expostas |
 | 11 | Framework nasce como pacote reutilizável, com estrutura própria e versionamento | Evita retrabalho caso seja aproveitado além do projeto atual |
 | 12 | `position` (center, top, bottom, left, right e cantos) posiciona o próprio `Div`/`LayoutEngine` dentro do pai; `align` alinha apenas o conteúdo dentro dele | Separa "onde o Div fica" de "como o conteúdo se organiza"; com `position` definida o Div se ajusta ao conteúdo no eixo principal |
+| 13 | Sem tema padrão: consultar `ThemeTokens` sem `AppThemeScope` lança erro; tokens opcionais (surface, muted, onPrimary, border) têm fallback documentado a partir dos obrigatórios | Reforça a decisão #2: nenhuma cor vem de fonte implícita |
+| 14 | Specs de estilo se chamam `*StyleSpec` (`InputStyleSpec`, `ButtonStyleSpec`...) e não conhecem cores | Evita colisão com `ButtonStyle` do Material; cores vêm dos tokens no momento da montagem |
+| 15 | `StylePack.define` registra o pack por nome (redefinir substitui); `StylePackScope(pack:)` recebe a instância e `StylePackScope.named` busca pelo nome | Mantém a API declarativa do exemplo sem forçar estado global no uso interno |
 
 ---
 
