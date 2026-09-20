@@ -1,7 +1,7 @@
 name: easy_ui
-description: "A new Flutter package project."
+description: "Framework de UI declarativa sobre Flutter: layout enxuto, tema explícito e responsividade automática."
 version: 0.0.1
-homepage:
+repository: https://github.com/JohnWilliam24dev/Easy_UI_Framework
 
 environment:
   sdk: ^3.13.3
