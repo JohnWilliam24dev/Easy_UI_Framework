@@ -4,6 +4,7 @@
 /// importam este arquivo.
 library;
 
+export 'environment/platform_brightness.dart';
 export 'layout_engine/layout.dart';
 export 'responsive/responsive.dart';
 export 'style_resolver/style_resolver.dart';
