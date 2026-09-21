@@ -35,3 +35,16 @@ export 'src/widget_catalog/widget_catalog.dart'
         Label,
         LabelType,
         Tela;
+export 'src/widget_catalog/inputs/form/form_group.dart' show FormGroup;
+export 'src/widget_catalog/inputs/form/validators.dart'
+    show
+        FormValues,
+        Validator,
+        isEmail,
+        isPassword,
+        isRequired,
+        lengthBetween,
+        matches,
+        maxLength,
+        minLength,
+        sameAs;

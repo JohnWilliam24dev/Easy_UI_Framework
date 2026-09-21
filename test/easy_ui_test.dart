@@ -40,4 +40,17 @@ void main() {
     expect(LayoutPosition.center, isNotNull);
     expect(LayoutDirection.vertical, isNotNull);
   });
+
+  test('barrel exporta FormGroup e os validadores', () {
+    const FormValues nada = <String, String>{};
+    expect(const FormGroup().children, isEmpty);
+    expect(isRequired()('', nada), isNotNull);
+    expect(minLength(3)('ab', nada), isNotNull);
+    expect(maxLength(3)('abcd', nada), isNotNull);
+    expect(lengthBetween(1, 2)('abc', nada), isNotNull);
+    expect(isEmail()('x', nada), isNotNull);
+    expect(isPassword()('123', nada), isNotNull);
+    expect(matches(RegExp(r'^\d+$'))('a', nada), isNotNull);
+    expect(sameAs('a')('x', nada), isNotNull);
+  });
 }
