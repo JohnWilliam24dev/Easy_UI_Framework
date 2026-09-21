@@ -1,17 +1,35 @@
-# easy_ui_example
+# Exemplo do Easy UI
 
-A new Flutter project.
+App de demonstração do framework: login com validação e uma tela seguinte
+que mostra o mesmo conjunto de widgets em dois `StylePack`s diferentes.
 
-## Getting Started
+## Estrutura
 
-This project is a starting point for a Flutter application.
+```
+lib/
+  main.dart                     ponto de entrada (runApp)
+  app.dart                      ExampleApp: EasyApp + tema + pack padrão
+  routes.dart                   navegação entre as telas (callbacks)
+  theme/
+    example_theme.dart          AppTheme (paleta clara e escura)
+    style_packs.dart            StylePacks: cliente_convidativo e erp_operacional
+  screens/
+    login/
+      login_page.dart           tela de login
+      login_validators.dart     regras de validação
+    home/
+      home_page.dart            tela seguinte ao login
+      pack_panel.dart           painel usado para comparar os packs
+test/                           espelha a estrutura de lib/
+```
 
-A few resources to get you started if this is your first Flutter project:
+As telas não se conhecem: `LoginPage` recebe `onLogin` e `HomePage` recebe
+`onLogout`; quem liga as duas é `routes.dart`.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Rodando
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter pub get
+flutter run
+flutter test
+```
