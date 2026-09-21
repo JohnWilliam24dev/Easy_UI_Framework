@@ -270,6 +270,9 @@ pubspec.yaml                       → versionamento semver desde o início
 | 13 | Sem tema padrão: consultar `ThemeTokens` sem `AppThemeScope` lança erro; tokens opcionais (surface, muted, onPrimary, border) têm fallback documentado a partir dos obrigatórios | Reforça a decisão #2: nenhuma cor vem de fonte implícita |
 | 14 | Specs de estilo se chamam `*StyleSpec` (`InputStyleSpec`, `ButtonStyleSpec`...) e não conhecem cores | Evita colisão com `ButtonStyle` do Material; cores vêm dos tokens no momento da montagem |
 | 15 | `StylePack.define` registra o pack por nome (redefinir substitui); `StylePackScope(pack:)` recebe a instância e `StylePackScope.named` busca pelo nome | Mantém a API declarativa do exemplo sem forçar estado global no uso interno |
+| 16 | `Div` e `Tela` sem `gap`/`padding` declarado usam `2 x baseSpacing x spacingScale` do `StylePack` ativo | É assim que o `spacingScale` do pack (arejado vs. denso) chega ao layout sem o dev repetir valores; `0.px` remove |
+| 17 | `EasyApp` é a entrada do app: monta o `MaterialApp` (detalhe interno) com `ThemeData` derivado dos tokens, mais `AppThemeScope` e `StylePackScope` | O catálogo usa widgets Material por baixo (Scaffold, TextField, botões), mas toda cor vem dos tokens; nada da paleta padrão do Material aparece |
+| 18 | Fase 3 entrega `Tela` sem `appBar`, e `InputField` sem máscara/validação embutida (só `errorText`) | Escopo mínimo para a tela de login; entram junto das primeiras telas que precisarem |
 
 ---
 
@@ -294,13 +297,14 @@ Síntese do nível de simplificação alvo, conforme especificado pelo desenvolv
 ```dart
 Tela(
   child: Div(
+    position: LayoutPosition.center,
     align: Alignment.center,
     width: 50.vw,
     children: [
       Label(type: LabelType.title, text: "Login"),
       InputField(hint: "Username", type: InputType.text),
       InputField(hint: "Password", type: InputType.password),
-      Button(text: "Login", variant: ButtonVariant.solid),
+      Button(text: "Login", variant: ButtonVariant.solid, onPressed: entrar),
     ],
   ),
 )

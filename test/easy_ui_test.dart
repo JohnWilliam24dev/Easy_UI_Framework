@@ -32,4 +32,12 @@ void main() {
     );
     expect(StylePack.byName('barrel_teste'), pack);
   });
+
+  test('barrel exporta o catálogo e o vocabulário de layout', () {
+    expect(const Label(text: 'x').type, LabelType.body);
+    expect(const Button(text: 'x').variant, ButtonVariant.solid);
+    expect(const InputField().type, InputType.text);
+    expect(LayoutPosition.center, isNotNull);
+    expect(LayoutDirection.vertical, isNotNull);
+  });
 }
