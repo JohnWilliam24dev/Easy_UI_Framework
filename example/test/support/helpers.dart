@@ -23,9 +23,3 @@ Future<void> preencherLogin(
   await tester.enterText(campos.at(1), password);
   await tester.pump();
 }
-
-/// `true` se o botão de login está habilitado.
-bool loginHabilitado(WidgetTester tester) {
-  final botao = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
-  return botao.onPressed != null;
-}

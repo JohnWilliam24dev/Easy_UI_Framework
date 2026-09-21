@@ -1,44 +1,58 @@
 import 'package:easy_ui/easy_ui.dart';
-import 'package:easy_ui_example/screens/login/login_page.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:easy_ui_example/screens/login/login_page.dart';
 
 import '../../support/helpers.dart';
 
 void main() {
-  testWidgets('monta só com a API do catálogo e começa bloqueado',
+  testWidgets('monta só com a API do catálogo, sem erros iniciais',
       (tester) async {
     await tester.pumpWidget(easyHome(LoginPage(onLogin: (_) {})));
 
+    expect(find.byType(FormGroup), findsOneWidget);
     expect(find.byType(Label), findsOneWidget);
     expect(find.byType(InputField), findsNWidgets(2));
     expect(find.byType(Button), findsOneWidget);
-    expect(loginHabilitado(tester), isFalse);
-    // Nenhum erro aparece antes do usuário digitar.
-    expect(find.text('Use mais de 3 caracteres'), findsNothing);
+    expect(find.text('Campo obrigatório'), findsNothing);
   });
 
-  testWidgets('mostra os erros e mantém o botão bloqueado', (tester) async {
-    await tester.pumpWidget(easyHome(LoginPage(onLogin: (_) {})));
+  testWidgets('enviar vazio revela os erros e não faz login', (tester) async {
+    String? recebido;
+    await tester.pumpWidget(easyHome(LoginPage(onLogin: (u) => recebido = u)));
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pump();
+
+    expect(find.text('Campo obrigatório'), findsNWidgets(2));
+    expect(recebido, isNull);
+  });
+
+  testWidgets('mostra a mensagem de cada regra e não faz login',
+      (tester) async {
+    String? recebido;
+    await tester.pumpWidget(easyHome(LoginPage(onLogin: (u) => recebido = u)));
     await preencherLogin(tester, username: 'abc', password: '1234567');
 
-    expect(find.text('Use mais de 3 caracteres'), findsOneWidget);
+    expect(find.text('Use pelo menos 4 caracteres'), findsOneWidget);
     expect(
-      find.text('A senha precisa de 8 caracteres ou mais'),
+      find.text('A senha precisa ter 8 ou mais caracteres'),
       findsOneWidget,
     );
-    expect(loginHabilitado(tester), isFalse);
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pump();
+    expect(recebido, isNull);
   });
 
-  testWidgets('com dados válidos libera o botão e entrega o username',
-      (tester) async {
+  testWidgets('dados válidos entregam o username', (tester) async {
     String? recebido;
     await tester.pumpWidget(easyHome(LoginPage(onLogin: (u) => recebido = u)));
     await preencherLogin(tester, username: 'maria', password: 'senha1234');
 
-    expect(find.text('Use mais de 3 caracteres'), findsNothing);
-    expect(loginHabilitado(tester), isTrue);
+    expect(find.text('Campo obrigatório'), findsNothing);
 
-    await tester.tap(find.byType(Button));
+    await tester.tap(find.byType(ElevatedButton));
     await tester.pump();
     expect(recebido, 'maria');
   });

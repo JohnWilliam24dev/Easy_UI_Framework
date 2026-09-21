@@ -15,13 +15,15 @@ lib/
     style_packs.dart            StylePacks: cliente_convidativo e erp_operacional
   screens/
     login/
-      login_page.dart           tela de login
-      login_validators.dart     regras de validação
+      login_page.dart           tela de login (FormGroup + validation)
     home/
       home_page.dart            tela seguinte ao login
       pack_panel.dart           painel usado para comparar os packs
 test/                           espelha a estrutura de lib/
 ```
+
+A validação usa os validadores do próprio framework (`isRequired`,
+`minLength`, `isPassword`...); a tela de login não tem estado.
 
 As telas não se conhecem: `LoginPage` recebe `onLogin` e `HomePage` recebe
 `onLogout`; quem liga as duas é `routes.dart`.

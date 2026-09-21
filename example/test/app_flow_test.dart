@@ -24,18 +24,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(LoginPage), findsOneWidget);
-    expect(loginHabilitado(tester), isFalse);
+    expect(find.byType(HomePage), findsNothing);
   });
 
-  testWidgets('login inválido não navega', (tester) async {
+  testWidgets('login inválido não navega e mostra os erros', (tester) async {
     await tester.pumpWidget(const ExampleApp());
-    await preencherLogin(tester, username: 'abc', password: '123');
 
-    expect(loginHabilitado(tester), isFalse);
-    await tester.tap(find.byType(ElevatedButton), warnIfMissed: false);
+    await tester.tap(find.byType(ElevatedButton));
     await tester.pumpAndSettle();
 
     expect(find.byType(LoginPage), findsOneWidget);
     expect(find.byType(HomePage), findsNothing);
+    expect(find.text('Campo obrigatório'), findsNWidgets(2));
   });
 }
