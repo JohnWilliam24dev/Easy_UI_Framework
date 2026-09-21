@@ -1,4 +1,5 @@
 import 'package:easy_ui/src/theme_layer/theme_layer.dart';
+import 'package:easy_ui/src/widget_catalog/inputs/form/validators.dart';
 import 'package:easy_ui/src/widget_catalog/inputs/input_field.dart';
 import 'package:easy_ui/src/widget_catalog/layout/tela.dart';
 import 'package:flutter/material.dart';
@@ -198,12 +199,12 @@ void main() {
     });
   });
 
-  group('validator', () {
-    String? minimo4(String v) => v.length >= 4 ? null : 'Mínimo de 4';
+  group('validation (campo avulso)', () {
+    final regras = [minLength(4, message: 'Mínimo de 4')];
 
     testWidgets('só mostra o erro depois que o usuário digita',
         (tester) async {
-      await pumpEasy(tester, _tela(InputField(validator: minimo4)));
+      await pumpEasy(tester, _tela(InputField(validation: regras)));
       expect(find.text('Mínimo de 4'), findsNothing);
 
       await tester.enterText(find.byType(TextField), 'ab');
@@ -215,11 +216,25 @@ void main() {
       expect(find.text('Mínimo de 4'), findsNothing);
     });
 
-    testWidgets('errorText externo tem prioridade sobre o validator',
+    testWidgets('várias regras: mostra a primeira que falhar', (tester) async {
+      await pumpEasy(
+        tester,
+        _tela(InputField(validation: [isRequired(), isEmail()])),
+      );
+      await tester.enterText(find.byType(TextField), 'abc');
+      await tester.pump();
+      expect(find.text('E-mail inválido'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pump();
+      expect(find.text('Campo obrigatório'), findsOneWidget);
+    });
+
+    testWidgets('errorText externo tem prioridade sobre a validação',
         (tester) async {
       await pumpEasy(
         tester,
-        _tela(InputField(validator: minimo4, errorText: 'Vindo do servidor')),
+        _tela(InputField(validation: regras, errorText: 'Vindo do servidor')),
       );
       await tester.enterText(find.byType(TextField), 'ab');
       await tester.pump();
@@ -231,21 +246,22 @@ void main() {
       String? recebido;
       await pumpEasy(
         tester,
-        _tela(InputField(validator: minimo4, onChanged: (v) => recebido = v)),
+        _tela(InputField(validation: regras, onChanged: (v) => recebido = v)),
       );
       await tester.enterText(find.byType(TextField), 'abc');
       expect(recebido, 'abc');
     });
 
-    testWidgets('lê o valor do controller quando existe', (tester) async {
+    testWidgets('lê o valor do controller externo', (tester) async {
       final controller = TextEditingController();
       addTearDown(controller.dispose);
       await pumpEasy(
         tester,
-        _tela(InputField(controller: controller, validator: minimo4)),
+        _tela(InputField(controller: controller, validation: regras)),
       );
       await tester.enterText(find.byType(TextField), 'ab');
       await tester.pump();
+      expect(controller.text, 'ab');
       expect(find.text('Mínimo de 4'), findsOneWidget);
     });
   });
