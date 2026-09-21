@@ -123,7 +123,7 @@ Consome exclusivamente o Widget Catalog. Nunca importa Kernel ou Theme Layer dir
 
 ---
 
-## 3. Catálogo de Widgets (16 widgets)
+## 3. Catálogo de Widgets (17 widgets)
 
 | Grupo | Widget | O que abstrai (Flutter nativo) | Variants (prop) |
 |---|---|---|---|
@@ -134,6 +134,7 @@ Consome exclusivamente o Widget Catalog. Nunca importa Kernel ou Theme Layer dir
 | Inputs | `InputField` | TextField + InputDecoration + validação + máscara | `type: text\|email\|password\|number\|phone\|search` |
 | Inputs | `Select` | DropdownButton / DropdownMenu | `type: single\|multi` |
 | Inputs | `Toggle` | Checkbox + Switch + Radio (unificados) | `type: checkbox\|switch\|radio` |
+| Inputs | `FormGroup` | `Div` + escopo de validação (registra os `InputField`s e habilita `Button(onSubmit)`) | mesmas props do `Div` |
 | Ações | `Button` | ElevatedButton / OutlinedButton / TextButton + loading state | `variant: solid\|outline\|ghost\|pill` |
 | Dados | `DataList` | ListView.builder + paginação server-side | `limit` (default: 50) |
 | Display | `Avatar` | CircleAvatar + fallback de iniciais | `size: sm\|md\|lg` |
@@ -198,6 +199,32 @@ Toggle(type: ToggleType.checkbox, value: false, onChanged: ...)
 Toggle(type: ToggleType.radio, groupValue: ..., value: ..., onChanged: ...)
 ```
 
+### 3.4 Detalhamento — Validação e `FormGroup`
+
+A validação é declarativa, no estilo dos decorators do NestJS: cada `InputField` recebe uma lista `validation` de validadores pré-configurados, e o botão de envio valida o formulário inteiro sem que a tela precise de estado.
+
+```dart
+FormGroup(
+  position: LayoutPosition.center,
+  width: 50.vw,
+  children: [
+    InputField(name: 'username', validation: [isRequired(), minLength(4)]),
+    InputField(name: 'password', type: InputType.password,
+        validation: [isRequired(), isPassword(min: 8)]),
+    Button(text: 'Login', onSubmit: (values) => entrar(values['username']!)),
+  ],
+)
+```
+
+- **Validadores** (`Validator = String? Function(String value, FormValues all)`): `isRequired`, `minLength`, `maxLength`, `lengthBetween`, `isEmail`, `isPassword`, `matches`, `sameAs`. Cada um aceita `message:` para trocar o texto padrão. Rodam em ordem e a primeira falha vira a mensagem exibida.
+- **Vazio é válido**: com exceção de `isRequired`, todos os validadores aceitam valor vazio. Para exigir preenchimento, use `isRequired()` explicitamente.
+- **Quando o erro aparece**: só depois que o usuário digita no campo ou tenta enviar o formulário. Ao enviar com erro, todos os erros são revelados e o primeiro campo inválido recebe o foco.
+- **`Button(onSubmit:)`**: só existe dentro de um `FormGroup`. Valida tudo e, se estiver válido, chama `onSubmit` com os valores (`Map<String, String>` por `name`). Se `onSubmit` devolver um `Future`, o botão mostra `loading` até terminar. `disableWhenInvalid: true` desabilita o botão enquanto o formulário estiver inválido (por padrão ele fica clicável e mostra os erros).
+- **`onPressed`** continua sendo a ação comum, que não valida nada (ex.: "Cancelar").
+- **Regras entre campos** (`sameAs('password')`) recebem os valores dos demais campos e são reavaliadas quando qualquer campo muda.
+- **Uso incorreto falha alto**: `onSubmit` fora de um `FormGroup`, campo com `validation` sem `name` ou `name` duplicado lançam erro com mensagem explicando.
+- Não há controller público: o `FormController` é interno. Erro vindo do servidor pode ser passado por `InputField.errorText`.
+
 ---
 
 ## 4. Sistema de Unidades (Unit System)
@@ -236,7 +263,7 @@ lib/
       style_pack/           → StylePack, StylePackScope, specs (InputStyleSpec, ButtonStyleSpec...)
     widget_catalog/
       layout/                → Div, Tela, Grid
-      inputs/                 → InputField, Select, Toggle
+      inputs/                 → InputField, Select, Toggle, FormGroup, form/ (validators, FormController)
       display/                 → Label, Avatar, Card, Badge, Icon, Divider
       actions/                  → Button
       data/                      → DataList
@@ -273,7 +300,11 @@ pubspec.yaml                       → versionamento semver desde o início
 | 16 | `Div` e `Tela` sem `gap`/`padding` declarado usam `2 x baseSpacing x spacingScale` do `StylePack` ativo | É assim que o `spacingScale` do pack (arejado vs. denso) chega ao layout sem o dev repetir valores; `0.px` remove |
 | 17 | `EasyApp` é a entrada do app: monta o `MaterialApp` (detalhe interno) com `ThemeData` derivado dos tokens, mais `AppThemeScope` e `StylePackScope` | O catálogo usa widgets Material por baixo (Scaffold, TextField, botões), mas toda cor vem dos tokens; nada da paleta padrão do Material aparece |
 | 18 | Fase 3 entrega `Tela` sem `appBar` e `InputField` sem máscara (a validação veio logo depois, ver #19) | Escopo mínimo para a tela de login; entram junto das primeiras telas que precisarem |
-| 19 | `InputField.validator` (`String? Function(String)`) mostra o erro só depois da primeira digitação; `errorText` externo tem prioridade | Validação declarativa sem `Form`/`TextFormField` na tela e sem acusar campo ainda não tocado |
+| 19 | Validação por lista `validation: [...]` de validadores pré-configurados (`isRequired`, `minLength`, `isEmail`, `isPassword`...), com erro exibido só depois da primeira digitação ou da tentativa de envio | Validação declarativa, sem `Form`/`TextFormField` na tela e sem acusar campo ainda não tocado |
+| 20 | `FormGroup` cria um escopo implícito: `InputField`s com `name` se registram sozinhos e `Button(onSubmit:)` valida o grupo | Tela sem estado, controllers ou `onChanged`; um widget novo se justifica por mudar a natureza semântica (agrupar validação), regra #5 |
+| 21 | Validadores tratam valor vazio como válido (exceto `isRequired`) e recebem também os demais valores do formulário | Campos opcionais com `isEmail()` não reclamam vazios; a assinatura já permite regras entre campos (`sameAs`) sem quebra futura |
+| 22 | Validadores usam prefixo `is` quando checam natureza (`isEmail`, `isPassword`, `isRequired`) | Nomes soltos como `email` e `password` colidem com variáveis locais comuns |
+| 23 | Botão de envio fica clicável por padrão e revela os erros ao clicar; `disableWhenInvalid` é opt-in | Botão desabilitado não explica ao usuário o que falta |
 
 ---
 
