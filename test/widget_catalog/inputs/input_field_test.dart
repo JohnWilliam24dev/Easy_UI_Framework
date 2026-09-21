@@ -165,8 +165,14 @@ void main() {
     });
 
     testWidgets('elevation adiciona sombra atrás do campo', (tester) async {
+      bool temSombra(Widget w) {
+        return w is DecoratedBox &&
+            w.decoration is BoxDecoration &&
+            (w.decoration as BoxDecoration).boxShadow != null;
+      }
+
       await pumpEasy(tester, _tela(const InputField()));
-      expect(find.byType(DecoratedBox), findsNothing);
+      expect(find.byWidgetPredicate(temSombra), findsNothing);
 
       await pumpEasy(
         tester,
@@ -176,13 +182,7 @@ void main() {
           inputText: InputStyleSpec.rounded(elevation: ElevationLevel.subtle),
         ),
       );
-      expect(
-        find.descendant(
-          of: find.byType(InputField),
-          matching: find.byType(DecoratedBox),
-        ),
-        findsWidgets,
-      );
+      expect(find.byWidgetPredicate(temSombra), findsOneWidget);
     });
 
     testWidgets('spacingScale altera o padding interno', (tester) async {
