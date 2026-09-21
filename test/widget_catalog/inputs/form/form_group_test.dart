@@ -89,9 +89,8 @@ void main() {
 
     testWidgets('foca o primeiro campo inválido', (tester) async {
       await pumpEasy(tester, _loginForm());
-      // username válido, password inválido -> foca o password.
-      await tester.enterText(find.byType(TextField).at(0), 'maria');
-      await tester.pump();
+      // username válido, password curto demais -> foca o password.
+      await _preencher(tester, username: 'maria', password: '123');
 
       await tester.tap(_botaoEntrar);
       await tester.pump();
