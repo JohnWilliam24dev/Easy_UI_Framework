@@ -197,4 +197,56 @@ void main() {
       expect(padding.vertical, closeTo(2 * (1.5 * 8 * 2), 1e-9)); // topo + base
     });
   });
+
+  group('validator', () {
+    String? minimo4(String v) => v.length >= 4 ? null : 'Mínimo de 4';
+
+    testWidgets('só mostra o erro depois que o usuário digita',
+        (tester) async {
+      await pumpEasy(tester, _tela(InputField(validator: minimo4)));
+      expect(find.text('Mínimo de 4'), findsNothing);
+
+      await tester.enterText(find.byType(TextField), 'ab');
+      await tester.pump();
+      expect(find.text('Mínimo de 4'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'abcd');
+      await tester.pump();
+      expect(find.text('Mínimo de 4'), findsNothing);
+    });
+
+    testWidgets('errorText externo tem prioridade sobre o validator',
+        (tester) async {
+      await pumpEasy(
+        tester,
+        _tela(InputField(validator: minimo4, errorText: 'Vindo do servidor')),
+      );
+      await tester.enterText(find.byType(TextField), 'ab');
+      await tester.pump();
+      expect(find.text('Vindo do servidor'), findsOneWidget);
+      expect(find.text('Mínimo de 4'), findsNothing);
+    });
+
+    testWidgets('onChanged continua sendo chamado', (tester) async {
+      String? recebido;
+      await pumpEasy(
+        tester,
+        _tela(InputField(validator: minimo4, onChanged: (v) => recebido = v)),
+      );
+      await tester.enterText(find.byType(TextField), 'abc');
+      expect(recebido, 'abc');
+    });
+
+    testWidgets('lê o valor do controller quando existe', (tester) async {
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+      await pumpEasy(
+        tester,
+        _tela(InputField(controller: controller, validator: minimo4)),
+      );
+      await tester.enterText(find.byType(TextField), 'ab');
+      await tester.pump();
+      expect(find.text('Mínimo de 4'), findsOneWidget);
+    });
+  });
 }

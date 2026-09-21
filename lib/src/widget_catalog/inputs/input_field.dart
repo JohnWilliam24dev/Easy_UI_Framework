@@ -11,9 +11,13 @@ enum InputType { text, email, password, number, phone, search }
 ///
 /// - `password` esconde o texto e ganha o botão de mostrar/ocultar;
 /// - `search` ganha o ícone de lupa;
-/// - [errorText] exibe a mensagem de erro (a validação é feita por quem usa).
+/// - [validator] devolve a mensagem de erro (ou `null` se o valor é válido).
+///   O erro só aparece depois que o usuário começa a digitar, para não
+///   "acusar" um campo que ainda não foi tocado;
+/// - [errorText], se informado, tem prioridade sobre o [validator] (útil para
+///   erros vindos do servidor).
 ///
-/// Máscara e validação embutida entram em uma próxima etapa.
+/// Máscara entra em uma próxima etapa.
 ///
 /// ```dart
 /// InputField(hint: 'Username', type: InputType.text)
@@ -27,6 +31,7 @@ class InputField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.errorText,
+    this.validator,
     this.enabled = true,
     this.autofocus = false,
     this.textInputAction,
@@ -38,6 +43,7 @@ class InputField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final String? errorText;
+  final String? Function(String value)? validator;
   final bool enabled;
   final bool autofocus;
   final TextInputAction? textInputAction;
@@ -48,6 +54,18 @@ class InputField extends StatefulWidget {
 
 class _InputFieldState extends State<InputField> {
   bool _obscured = true;
+  bool _touched = false;
+  String _value = '';
+
+  String get _currentValue => widget.controller?.text ?? _value;
+
+  void _handleChanged(String value) {
+    setState(() {
+      _touched = true;
+      _value = value;
+    });
+    widget.onChanged?.call(value);
+  }
 
   static TextInputType _keyboardFor(InputType type) {
     return switch (type) {
@@ -65,6 +83,9 @@ class _InputFieldState extends State<InputField> {
     final tokens = AppThemeScope.tokensOf(context);
     final pack = StylePackScope.of(context);
     final type = widget.type;
+
+    final error = widget.errorText ??
+        (_touched ? widget.validator?.call(_currentValue) : null);
 
     final isPassword = type == InputType.password;
     final isFreeText = type == InputType.text || type == InputType.search;
@@ -86,7 +107,7 @@ class _InputFieldState extends State<InputField> {
 
     Widget field = TextField(
       controller: widget.controller,
-      onChanged: widget.onChanged,
+      onChanged: _handleChanged,
       onSubmitted: widget.onSubmitted,
       enabled: widget.enabled,
       autofocus: widget.autofocus,
@@ -106,7 +127,7 @@ class _InputFieldState extends State<InputField> {
         tokens: tokens,
         pack: pack,
         hint: widget.hint,
-        errorText: widget.errorText,
+        errorText: error,
         prefixIcon: prefix,
         suffixIcon: suffix,
       ),
