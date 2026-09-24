@@ -7,7 +7,7 @@ import '../../support/helpers.dart';
 void main() {
   testWidgets('mostra a saudação e os dois painéis', (tester) async {
     await tester.pumpWidget(
-      easyHome(HomePage(username: 'maria', onLogout: () {})),
+      easyHome(HomePage(username: 'maria', onLogout: () {}, onOpenOrders: () {})),
     );
 
     expect(find.text('Olá, maria'), findsOneWidget);
@@ -17,7 +17,7 @@ void main() {
 
   testWidgets('cada painel usa o seu StylePack', (tester) async {
     await tester.pumpWidget(
-      easyHome(HomePage(username: 'maria', onLogout: () {})),
+      easyHome(HomePage(username: 'maria', onLogout: () {}, onOpenOrders: () {})),
     );
 
     final campos =
@@ -31,11 +31,28 @@ void main() {
   testWidgets('Sair chama onLogout', (tester) async {
     var saiu = false;
     await tester.pumpWidget(
-      easyHome(HomePage(username: 'maria', onLogout: () => saiu = true)),
+      easyHome(HomePage(username: 'maria', onLogout: () => saiu = true, onOpenOrders: () {})),
     );
 
     await tester.tap(find.text('Sair'));
     await tester.pump();
     expect(saiu, isTrue);
+  });
+
+  testWidgets('Ver pedidos chama onOpenOrders', (tester) async {
+    var abriu = false;
+    await tester.pumpWidget(
+      easyHome(
+        HomePage(
+          username: 'maria',
+          onLogout: () {},
+          onOpenOrders: () => abriu = true,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Ver pedidos'));
+    await tester.pump();
+    expect(abriu, isTrue);
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 
 import 'screens/home/home_page.dart';
 import 'screens/login/login_page.dart';
+import 'screens/orders/orders_page.dart';
 
 /// Navegação do exemplo. As telas não se conhecem: cada uma recebe daqui os
 /// callbacks para ir à próxima.
@@ -25,6 +26,15 @@ WidgetBuilder _homeBuilder(String username) {
           MaterialPageRoute<void>(builder: buildLoginScreen),
         );
       },
+      onOpenOrders: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: _ordersBuilder),
+        );
+      },
     );
   };
+}
+
+Widget _ordersBuilder(BuildContext context) {
+  return OrdersPage(onBack: () => Navigator.of(context).pop());
 }

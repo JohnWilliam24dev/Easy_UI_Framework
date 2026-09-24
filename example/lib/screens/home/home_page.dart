@@ -9,10 +9,16 @@ import 'pack_panel.dart';
 ///
 /// Não conhece a tela de login: avisa quem a usa por [onLogout].
 class HomePage extends StatelessWidget {
-  const HomePage({super.key, required this.username, required this.onLogout});
+  const HomePage({
+    super.key,
+    required this.username,
+    required this.onLogout,
+    required this.onOpenOrders,
+  });
 
   final String username;
   final VoidCallback onLogout;
+  final VoidCallback onOpenOrders;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +35,7 @@ class HomePage extends StatelessWidget {
                 size: 1.fr,
                 child: Label(type: LabelType.title, text: 'Olá, $username'),
               ),
+              Button(text: 'Ver pedidos', onPressed: onOpenOrders),
               Button(
                 text: 'Sair',
                 variant: ButtonVariant.ghost,
