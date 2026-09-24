@@ -305,6 +305,11 @@ pubspec.yaml                       → versionamento semver desde o início
 | 21 | Validadores tratam valor vazio como válido (exceto `isRequired`) e recebem também os demais valores do formulário | Campos opcionais com `isEmail()` não reclamam vazios; a assinatura já permite regras entre campos (`sameAs`) sem quebra futura |
 | 22 | Validadores usam prefixo `is` quando checam natureza (`isEmail`, `isPassword`, `isRequired`) | Nomes soltos como `email` e `password` colidem com variáveis locais comuns |
 | 23 | Botão de envio fica clicável por padrão e revela os erros ao clicar; `disableWhenInvalid` é opt-in | Botão desabilitado não explica ao usuário o que falta |
+| 24 | `Grid` usa `GridView` do Flutter por baixo, com `shrinkWrap: true` e sem rolagem própria por padrão (`scrollable: true` inverte) | Cabe dentro de uma `Tela(scrollable: true)` junto de outro conteúdo; evita duas áreas de rolagem aninhadas por engano |
+| 25 | `DataList` busca a próxima página quando faltam menos de 300px para o fim da rolagem, e para quando uma página devolve menos itens que `limit` | Paginação automática sem botão "carregar mais"; o critério de parada não exige um `hasMore` explícito da API |
+| 26 | `Select` tem dois construtores nomeados, `.single` e `.multi`, em vez de uma prop `type` puramente dinâmica | Mantém `value`/`onChanged` fortemente tipados (`T` e `List<T>`) em vez de `dynamic` |
+| 27 | `Toggle<T>` unifica `checkbox`/`switch_`/`radio` com um único `onChanged: ValueChanged<T>`: para checkbox/switch `T` é `bool` (o novo estado); para radio, `T` é o tipo da opção (o valor que passa a ser o selecionado) | A mesma assinatura de callback serve aos três comportamentos sem exigir `dynamic` nem dois widgets |
+| 28 | `Avatar` usa as duas primeiras iniciais de `name`; `Badge` sempre em formato de pílula, com a cor do texto calculada automaticamente pelo contraste do fundo | Comportamento previsível sem prop extra para a maioria dos casos |
 
 ---
 
@@ -316,7 +321,7 @@ pubspec.yaml                       → versionamento semver desde o início
 | 2 | Theme Layer: ThemeTokens + StylePack + StylePackScope | Dois StylePacks distintos aplicáveis em subárvores diferentes do mesmo app |
 | 3 | Widget Catalog básico: `Div`, `Tela`, `Label`, `InputField`, `Button` | Recriação da tela de login (referência: imagem fornecida) usando apenas a API do catálogo |
 | 4 | Validação da tela de login completa | API tão enxuta quanto o exemplo de referência do desenvolvedor |
-| 5 | Expansão do catálogo: `Grid`, `DataList`, `Select`, `Toggle`, `Avatar`, `Card`, `Badge`, `Icon`, `Divider` | Cobertura das telas reais do ERP (listagens, dashboards) |
+| 5 | Expansão do catálogo: `Grid`, `DataList`, `Select`, `Toggle`, `Avatar`, `Card`, `Badge`, `Icon`, `Divider` | Cobertura das telas reais do ERP (listagens, dashboards) | — **concluída**
 | 6 | Feedback: `Toast`, `Modal`, `Loader` | Fluxos de confirmação e carregamento cobertos |
 | 7+ | Expansão contínua conforme necessidade do ERP | Sob demanda |
 
