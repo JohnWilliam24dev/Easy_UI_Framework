@@ -1,4 +1,5 @@
 import 'package:easy_ui/easy_ui.dart';
+import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -53,4 +54,26 @@ void main() {
     expect(matches(RegExp(r'^\d+$'))('a', nada), isNotNull);
     expect(sameAs('a')('x', nada), isNotNull);
   });
+
+  test('barrel exporta os widgets da Fase 5', () {
+    expect(Avatar.initialsOf('Maria Silva'), 'MS');
+    expect(AvatarSize.md.diameter, 40);
+    expect(const Badge(text: 'x').color, BadgeColor.neutral);
+    expect(const Card(child: SizedBox()).elevation, isNull);
+    expect(const Divider().thickness, 1);
+    expect(const Icon(Icons.star).size, isNull);
+    expect(const Toggle(value: true, onChanged: null).type, ToggleType.checkbox);
+    expect(
+      Select<String>.single(options: const [], onChanged: (_) {}).options,
+      isEmpty,
+    );
+    expect(const Grid(minCell: 2, maxCell: 4, children: []).cellRatio, 1);
+    expect(
+      const DataList<int>(source: _semDados, itemBuilder: _semItem).limit,
+      50,
+    );
+  });
 }
+
+Future<List<int>> _semDados(int page, int limit) async => const [];
+Widget _semItem(BuildContext context, int item) => const SizedBox();

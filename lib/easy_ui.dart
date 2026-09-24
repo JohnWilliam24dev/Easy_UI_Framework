@@ -26,15 +26,30 @@ export 'src/kernel/layout_engine/layout.dart'
     show LayoutDirection, LayoutItem, LayoutPosition;
 export 'src/widget_catalog/widget_catalog.dart'
     show
+        Avatar,
+        AvatarSize,
+        Badge,
+        BadgeColor,
         Button,
         ButtonVariant,
+        Card,
+        DataList,
+        DataSource,
         Div,
+        Divider,
         EasyApp,
+        FormGroup,
+        Grid,
+        Icon,
         InputField,
         InputType,
         Label,
         LabelType,
-        Tela;
+        Select,
+        SelectOption,
+        Tela,
+        Toggle,
+        ToggleType;
 export 'src/widget_catalog/inputs/form/form_group.dart' show FormGroup;
 export 'src/widget_catalog/inputs/form/validators.dart'
     show
