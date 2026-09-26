@@ -119,10 +119,17 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
     _form = controller;
     if (controller == null) return;
 
-    assert(
-      widget.name != null || widget.validation.isEmpty,
-      'Dentro de um FormGroup, todo InputField com validation precisa de name.',
-    );
+    if (widget.name == null && widget.validation.isNotEmpty) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: FlutterError(
+            'Dentro de um FormGroup, todo InputField com validation precisa '
+            'de name.',
+          ),
+          library: 'easy_ui',
+        ),
+      );
+    }
     if (widget.name != null) {
       _registeredName = widget.name;
       controller.attach(this);

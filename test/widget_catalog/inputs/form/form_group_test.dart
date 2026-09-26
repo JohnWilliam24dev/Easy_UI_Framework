@@ -246,7 +246,7 @@ void main() {
           ),
         ),
       );
-      expect(tester.takeException(), isA<AssertionError>());
+      expect(tester.takeException(), isA<FlutterError>());
     });
 
     testWidgets('names duplicados no mesmo FormGroup falham', (tester) async {
@@ -261,7 +261,7 @@ void main() {
           ),
         ),
       );
-      expect(tester.takeException(), isA<AssertionError>());
+      expect(tester.takeException(), isA<FlutterError>());
     });
   });
 }

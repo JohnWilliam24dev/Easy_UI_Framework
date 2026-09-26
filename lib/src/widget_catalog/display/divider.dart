@@ -32,11 +32,19 @@ class Divider extends StatelessWidget {
     return horizontal
         ? Padding(
             padding: EdgeInsets.symmetric(horizontal: inset),
-            child: SizedBox(height: thickness, child: ColoredBox(color: color)),
+            child: SizedBox(
+              width: double.infinity,
+              height: thickness,
+              child: ColoredBox(color: color),
+            ),
           )
         : Padding(
             padding: EdgeInsets.symmetric(vertical: inset),
-            child: SizedBox(width: thickness, child: ColoredBox(color: color)),
+            child: SizedBox(
+              width: thickness,
+              height: double.infinity,
+              child: ColoredBox(color: color),
+            ),
           );
   }
 }

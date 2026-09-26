@@ -56,10 +56,25 @@ class FormController extends ChangeNotifier {
   }
 
   void attach(FormFieldHandle field) {
-    assert(
-      !_fields.containsKey(field.name),
-      'Já existe um InputField com name "${field.name}" neste FormGroup.',
-    );
+    if (_fields.containsKey(field.name)) {
+      // Um `throw` síncrono aqui aconteceria no meio de
+      // `didChangeDependencies`/build do segundo campo, deixando a árvore de
+      // widgets pela metade (o primeiro campo já montado, com FocusNode e
+      // dependências de InheritedWidget ativas) — o Flutter não lida bem com
+      // isso e o teardown do teste quebra com um erro interno não
+      // relacionado. `reportError` avisa (aparece via `tester.takeException`)
+      // sem interromper o frame atual: o segundo campo simplesmente não
+      // participa da validação do formulário.
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: FlutterError(
+            'Já existe um InputField com name "${field.name}" neste FormGroup.',
+          ),
+          library: 'easy_ui',
+        ),
+      );
+      return;
+    }
     _fields[field.name] = field;
     _notifyAfterFrame();
   }

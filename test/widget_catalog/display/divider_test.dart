@@ -37,7 +37,12 @@ void main() {
       const Tela(child: easy.Divider(thickness: 4, inset: 20)),
     );
     expect(tester.getSize(find.byType(easy.Divider)).height, 4);
-    final padding = tester.widget<Padding>(find.byType(Padding).first);
+    final padding = tester.widget<Padding>(
+      find.descendant(
+        of: find.byType(easy.Divider),
+        matching: find.byType(Padding),
+      ),
+    );
     expect(padding.padding, const EdgeInsets.symmetric(horizontal: 20));
   });
 }

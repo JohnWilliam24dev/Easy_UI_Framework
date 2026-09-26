@@ -15,10 +15,15 @@ DataSource<int> _fakeSource(int total, {Duration delay = Duration.zero}) {
   };
 }
 
-Widget _lista(DataSource<int> source, {int limit = 50, WidgetBuilder? emptyBuilder}) {
+Widget _lista(
+  DataSource<int> source, {
+  int limit = 50,
+  double height = 400,
+  WidgetBuilder? emptyBuilder,
+}) {
   return Tela(
     child: SizedBox(
-      height: 400,
+      height: height,
       child: DataList<int>(
         source: source,
         limit: limit,
@@ -31,6 +36,18 @@ Widget _lista(DataSource<int> source, {int limit = 50, WidgetBuilder? emptyBuild
       ),
     ),
   );
+}
+
+/// Rola a [ListView] em pequenos passos até [finder] aparecer, virtualizando
+/// a lista aos poucos (uma rolagem só, grande demais, pode pular direto para
+/// o fim do conteúdo já carregado sem passar pelos itens no meio).
+Future<void> _rolarAte(WidgetTester tester, Finder finder) async {
+  await tester.scrollUntilVisible(
+    finder,
+    -500,
+    scrollable: find.byType(Scrollable),
+  );
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -46,7 +63,10 @@ void main() {
   });
 
   testWidgets('carrega a primeira página com o limite pedido', (tester) async {
-    await pumpEasy(tester, _lista(_fakeSource(100), limit: 10));
+    await pumpEasy(
+      tester,
+      _lista(_fakeSource(100), limit: 10, height: 700),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Item 0'), findsOneWidget);
     expect(find.text('Item 9'), findsOneWidget);
@@ -58,8 +78,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Item 10'), findsNothing);
 
-    await tester.drag(find.byType(ListView), const Offset(0, -2000));
-    await tester.pumpAndSettle();
+    await _rolarAte(tester, find.text('Item 10'));
 
     expect(find.text('Item 10'), findsOneWidget);
   });
@@ -69,13 +88,12 @@ void main() {
     await pumpEasy(tester, _lista(_fakeSource(15), limit: 10));
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(ListView), const Offset(0, -2000));
-    await tester.pumpAndSettle();
+    await _rolarAte(tester, find.text('Item 14'));
     expect(find.text('Item 14'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
 
     // Mais uma tentativa de rolar não deve pedir página 3.
-    await tester.drag(find.byType(ListView), const Offset(0, -2000));
+    await tester.drag(find.byType(Scrollable), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });

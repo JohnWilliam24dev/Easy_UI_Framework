@@ -128,20 +128,22 @@ class Select<T> extends StatelessWidget {
     );
 
     if (_isMulti) {
-      final texto = values.isEmpty ? (hint ?? '') : values.map(_labelFor).join(', ');
+      final isEmptyState = values.isEmpty;
       return InkWell(
         onTap: enabled ? () => _openMultiPicker(context, tokens) : null,
         child: InputDecorator(
           decoration: decoration,
-          isEmpty: values.isEmpty,
-          child: Text(
-            texto,
-            style: values.isEmpty
-                ? TextStyle(color: tokens.mutedTextColor, fontFamily: tokens.fontFamily)
-                : textStyle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          isEmpty: isEmptyState,
+          // Quando vazio, o próprio InputDecorator já desenha o hintText da
+          // decoration; não repita o texto aqui, ou ele aparece em dobro.
+          child: isEmptyState
+              ? const SizedBox.shrink()
+              : Text(
+                  values.map(_labelFor).join(', '),
+                  style: textStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
         ),
       );
     }
