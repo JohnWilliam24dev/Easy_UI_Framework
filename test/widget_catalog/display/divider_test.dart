@@ -13,7 +13,12 @@ void main() {
     expect(size.height, 1);
     expect(size.width, greaterThan(100));
 
-    final box = tester.widget<ColoredBox>(find.byType(ColoredBox));
+    final box = tester.widget<ColoredBox>(
+      find.descendant(
+        of: find.byType(easy.Divider),
+        matching: find.byType(ColoredBox),
+      ),
+    );
     expect(box.color, testTokens.borderColor);
   });
 

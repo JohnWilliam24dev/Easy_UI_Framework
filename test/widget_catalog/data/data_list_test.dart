@@ -42,11 +42,15 @@ Widget _lista(
 /// a lista aos poucos (uma rolagem só, grande demais, pode pular direto para
 /// o fim do conteúdo já carregado sem passar pelos itens no meio).
 Future<void> _rolarAte(WidgetTester tester, Finder finder) async {
-  await tester.scrollUntilVisible(
-    finder,
-    -500,
-    scrollable: find.byType(Scrollable),
-  );
+  // scrollUntilVisible/dragUntilVisible se mostraram instáveis aqui (o
+  // Scrollable interno oscila durante os rebuilds de paginação); rolar
+  // manualmente em passos pequenos, checando o próprio finder a cada
+  // passo, é mais previsível.
+  for (var i = 0; i < 30; i++) {
+    if (finder.evaluate().isNotEmpty) return;
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pump();
+  }
   await tester.pumpAndSettle();
 }
 
@@ -93,7 +97,7 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
 
     // Mais uma tentativa de rolar não deve pedir página 3.
-    await tester.drag(find.byType(Scrollable), const Offset(0, -500));
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
