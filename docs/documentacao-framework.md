@@ -310,6 +310,9 @@ pubspec.yaml                       → versionamento semver desde o início
 | 26 | `Select` tem dois construtores nomeados, `.single` e `.multi`, em vez de uma prop `type` puramente dinâmica | Mantém `value`/`onChanged` fortemente tipados (`T` e `List<T>`) em vez de `dynamic` |
 | 27 | `Toggle<T>` unifica `checkbox`/`switch_`/`radio` com um único `onChanged: ValueChanged<T>`: para checkbox/switch `T` é `bool` (o novo estado); para radio, `T` é o tipo da opção (o valor que passa a ser o selecionado) | A mesma assinatura de callback serve aos três comportamentos sem exigir `dynamic` nem dois widgets |
 | 28 | `Avatar` usa as duas primeiras iniciais de `name`; `Badge` sempre em formato de pílula, com a cor do texto calculada automaticamente pelo contraste do fundo | Comportamento previsível sem prop extra para a maioria dos casos |
+| 29 | `Toast.show(context, ...)` é estático (dispara um `SnackBar` via `ScaffoldMessenger`), não um widget na árvore; um novo toast substitui o anterior (`hideCurrentSnackBar`) | Toast é um efeito colateral pontual, não estado de UI — não faz sentido compor como filho de outro widget |
+| 30 | `Modal` tem três métodos estáticos (`confirm`, `alert`, `custom`) em vez de um widget com `type: confirm\|alert\|custom` | `confirm` devolve `bool?`, `alert` devolve `void`, `custom<T>` devolve `T?` — tipos de retorno diferentes não cabem numa única prop `type` sem `dynamic` |
+| 31 | `Loader(mode: overlay)` exige ser filho direto de um `Stack` (usa `Positioned.fill` + `AbsorbPointer`); o véu usa a própria `backgroundColor` do tema com alpha, não uma cor fixa | Bloqueia toda a tela sem precisar saber se o tema ativo é claro ou escuro |
 
 ---
 
@@ -322,7 +325,7 @@ pubspec.yaml                       → versionamento semver desde o início
 | 3 | Widget Catalog básico: `Div`, `Tela`, `Label`, `InputField`, `Button` | Recriação da tela de login (referência: imagem fornecida) usando apenas a API do catálogo |
 | 4 | Validação da tela de login completa | API tão enxuta quanto o exemplo de referência do desenvolvedor |
 | 5 | Expansão do catálogo: `Grid`, `DataList`, `Select`, `Toggle`, `Avatar`, `Card`, `Badge`, `Icon`, `Divider` | Cobertura das telas reais do ERP (listagens, dashboards) | — **concluída**
-| 6 | Feedback: `Toast`, `Modal`, `Loader` | Fluxos de confirmação e carregamento cobertos |
+| 6 | Feedback: `Toast`, `Modal`, `Loader` | Fluxos de confirmação e carregamento cobertos | — **concluída**
 | 7+ | Expansão contínua conforme necessidade do ERP | Sob demanda |
 
 ---
