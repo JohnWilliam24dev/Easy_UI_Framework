@@ -73,6 +73,12 @@ void main() {
       50,
     );
   });
+
+  test('barrel exporta os widgets da Fase 6', () {
+    expect(const Loader().mode, LoaderMode.inline);
+    expect(Modal.confirm, isNotNull);
+    expect(Toast.show, isNotNull);
+  });
 }
 
 Future<List<int>> _semDados(int page, int limit) async => const [];

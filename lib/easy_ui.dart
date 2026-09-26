@@ -45,9 +45,14 @@ export 'src/widget_catalog/widget_catalog.dart'
         InputType,
         Label,
         LabelType,
+        Loader,
+        LoaderMode,
+        Modal,
         Select,
         SelectOption,
         Tela,
+        Toast,
+        ToastType,
         Toggle,
         ToggleType;
 export 'src/widget_catalog/inputs/form/form_group.dart' show FormGroup;
