@@ -56,47 +56,26 @@ class _OrdersPageState extends State<OrdersPage> {
           const Grid(
             minCell: 2,
             maxCell: 3,
-            cellRatio: 2,
+            // Baixo o bastante para caber título + selo mesmo com 2 colunas
+            // numa tela estreita (celular ou janela redimensionada).
+            cellRatio: 1.5,
             children: [
               OrderSummaryCard(label: 'Pendente', count: 13, color: BadgeColor.warning),
               OrderSummaryCard(label: 'Em produção', count: 12, color: BadgeColor.info),
               OrderSummaryCard(label: 'Concluído', count: 12, color: BadgeColor.success),
             ],
           ),
-          Div(
-            direction: LayoutDirection.horizontal,
-            children: [
-              LayoutItem(
-                size: 2.fr,
-                child: Select<OrderStatus?>.single(
-                  options: _filtros,
-                  value: _status,
-                  hint: 'Status',
-                  onChanged: (novo) {
-                    _status = novo;
-                    _aplicarFiltro();
-                  },
-                ),
-              ),
-              LayoutItem(
-                size: 1.fr,
-                child: Div(
-                  direction: LayoutDirection.horizontal,
-                  align: Alignment.centerLeft,
-                  children: [
-                    Toggle(
-                      type: ToggleType.switch_,
-                      value: _somentePendentes,
-                      onChanged: (v) {
-                        _somentePendentes = v;
-                        _aplicarFiltro();
-                      },
-                    ),
-                    const Label(type: LabelType.caption, text: 'Só pendentes'),
-                  ],
-                ),
-              ),
-            ],
+          _FiltrosPedidos(
+            status: _status,
+            somentePendentes: _somentePendentes,
+            onStatusChanged: (novo) {
+              _status = novo;
+              _aplicarFiltro();
+            },
+            onSomentePendentesChanged: (v) {
+              _somentePendentes = v;
+              _aplicarFiltro();
+            },
           ),
           const Divider(),
           LayoutItem(
@@ -110,6 +89,66 @@ class _OrdersPageState extends State<OrdersPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Filtro de status + toggle "Só pendentes". Lado a lado em telas largas;
+/// empilhado em telas estreitas, para o texto do toggle nunca disputar
+/// espaço demais com o Select e estourar a largura (visto num teste com a
+/// janela bem estreita). Usa `Breakpoints`/`ScreenSize` do próprio Kernel —
+/// exatamente o mecanismo de responsividade que o framework promete resolver
+/// sozinho, sem `MediaQuery` manual.
+class _FiltrosPedidos extends StatelessWidget {
+  const _FiltrosPedidos({
+    required this.status,
+    required this.somentePendentes,
+    required this.onStatusChanged,
+    required this.onSomentePendentesChanged,
+  });
+
+  final OrderStatus? status;
+  final bool somentePendentes;
+  final ValueChanged<OrderStatus?> onStatusChanged;
+  final ValueChanged<bool> onSomentePendentesChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final select = Select<OrderStatus?>.single(
+      options: _filtros,
+      value: status,
+      hint: 'Status',
+      onChanged: onStatusChanged,
+    );
+    final toggle = Div(
+      direction: LayoutDirection.horizontal,
+      align: Alignment.centerLeft,
+      children: [
+        Toggle(
+          type: ToggleType.switch_,
+          value: somentePendentes,
+          onChanged: onSomentePendentesChanged,
+        ),
+        const Label(type: LabelType.caption, text: 'Só pendentes'),
+      ],
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compacta =
+            Breakpoints.standard.sizeFor(constraints.maxWidth) == ScreenSize.mobile;
+
+        if (compacta) {
+          return Div(children: [select, toggle]);
+        }
+        return Div(
+          direction: LayoutDirection.horizontal,
+          children: [
+            LayoutItem(size: 2.fr, child: select),
+            LayoutItem(size: 1.fr, child: toggle),
+          ],
+        );
+      },
     );
   }
 }
