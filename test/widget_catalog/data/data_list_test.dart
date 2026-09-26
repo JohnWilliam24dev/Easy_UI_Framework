@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:easy_ui/src/widget_catalog/data/data_list.dart';
 import 'package:easy_ui/src/widget_catalog/layout/tela.dart';
 import 'package:flutter/material.dart';

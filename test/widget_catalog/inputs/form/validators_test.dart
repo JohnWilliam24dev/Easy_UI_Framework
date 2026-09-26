@@ -1,5 +1,5 @@
 import 'package:easy_ui/src/widget_catalog/inputs/form/validators.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide matches;
 
 const FormValues _nada = <String, String>{};
 

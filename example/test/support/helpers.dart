@@ -1,7 +1,7 @@
 import 'package:easy_ui/easy_ui.dart';
 import 'package:easy_ui_example/theme/example_theme.dart';
 import 'package:easy_ui_example/theme/style_packs.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Icon;
 import 'package:flutter_test/flutter_test.dart';
 
 /// Monta [home] dentro de um EasyApp com o tema e o pack do exemplo.

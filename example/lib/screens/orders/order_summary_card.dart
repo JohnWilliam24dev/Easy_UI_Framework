@@ -1,5 +1,5 @@
 import 'package:easy_ui/easy_ui.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/widgets.dart' hide Icon;
 
 /// Card de resumo (contagem) usado no topo da lista de pedidos — mostra o
 /// `Grid` acomodando cards de tamanho uniforme.

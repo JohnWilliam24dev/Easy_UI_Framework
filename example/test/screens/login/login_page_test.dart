@@ -1,5 +1,5 @@
 import 'package:easy_ui/easy_ui.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Icon;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:easy_ui_example/screens/login/login_page.dart';
 

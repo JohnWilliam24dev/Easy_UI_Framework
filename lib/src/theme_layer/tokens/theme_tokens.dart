@@ -19,9 +19,13 @@ class ThemeTokens {
     required this.secondaryColor,
     required this.backgroundColor,
     required this.textColor,
+    // ignore: prefer_initializing_formals
     Color? surfaceColor,
+    // ignore: prefer_initializing_formals
     Color? mutedTextColor,
+    // ignore: prefer_initializing_formals
     Color? onPrimaryColor,
+    // ignore: prefer_initializing_formals
     Color? borderColor,
     this.successColor = const Color(0xFF2E7D32),
     this.warningColor = const Color(0xFFED6C02),
@@ -80,9 +84,13 @@ class ThemeTokens {
     Color? secondaryColor,
     Color? backgroundColor,
     Color? textColor,
+    // ignore: prefer_initializing_formals
     Color? surfaceColor,
+    // ignore: prefer_initializing_formals
     Color? mutedTextColor,
+    // ignore: prefer_initializing_formals
     Color? onPrimaryColor,
+    // ignore: prefer_initializing_formals
     Color? borderColor,
     Color? successColor,
     Color? warningColor,

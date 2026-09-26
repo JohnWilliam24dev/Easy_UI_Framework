@@ -65,7 +65,7 @@ class Select<T> extends StatelessWidget {
   }
 
   Future<void> _openMultiPicker(BuildContext context, ThemeTokens tokens) async {
-    final seleção = Set<T>.of(values);
+    final selecao = Set<T>.of(values);
     final resultado = await showDialog<Set<T>>(
       context: context,
       builder: (dialogContext) {
@@ -76,7 +76,7 @@ class Select<T> extends StatelessWidget {
               children: [
                 for (final option in options)
                   CheckboxListTile(
-                    value: seleção.contains(option.value),
+                    value: selecao.contains(option.value),
                     title: Text(
                       option.label,
                       style: TextStyle(color: tokens.textColor),
@@ -85,9 +85,9 @@ class Select<T> extends StatelessWidget {
                     onChanged: (marcado) {
                       setState(() {
                         if (marcado ?? false) {
-                          seleção.add(option.value);
+                          selecao.add(option.value);
                         } else {
-                          seleção.remove(option.value);
+                          selecao.remove(option.value);
                         }
                       });
                     },
@@ -97,7 +97,7 @@ class Select<T> extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(seleção),
+                      onPressed: () => Navigator.of(dialogContext).pop(selecao),
                       child: Text(
                         'OK',
                         style: TextStyle(color: tokens.primaryColor),

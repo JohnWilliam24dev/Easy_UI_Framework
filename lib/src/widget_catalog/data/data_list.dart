@@ -1,6 +1,6 @@
+import 'package:flutter/material.dart' show CircularProgressIndicator;
 import 'package:flutter/widgets.dart';
 
-import '../../theme_layer/theme_layer.dart';
 import '../actions/button.dart';
 import '../display/label.dart';
 
@@ -95,8 +95,6 @@ class _DataListState<T> extends State<DataList<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = AppThemeScope.tokensOf(context);
-
     if (_items.isEmpty) {
       if (_loading) return const Center(child: CircularProgressIndicator());
       if (_error != null) return _ErrorState(error: _error!, onRetry: _loadNextPage);
@@ -129,7 +127,13 @@ class _DataListState<T> extends State<DataList<T>> {
           }
           return const Padding(
             padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
           );
         },
       ),

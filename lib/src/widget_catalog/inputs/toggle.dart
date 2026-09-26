@@ -66,9 +66,15 @@ class Toggle<T> extends StatelessWidget {
           activeThumbColor: tokens.onPrimaryColor,
           activeTrackColor: tokens.primaryColor,
         ),
+      // `groupValue`/`onChanged` diretos no Radio foram descontinuados a
+      // favor de um `RadioGroup` ancestral em versões recentes do Flutter,
+      // mas o pubspec deste pacote ainda suporta SDKs anteriores a isso.
+      // ignore: deprecated_member_use
       ToggleType.radio => Radio<T>(
           value: value,
+          // ignore: deprecated_member_use
           groupValue: groupValue,
+          // ignore: deprecated_member_use
           onChanged: handler == null
               ? null
               : (v) {

@@ -1,5 +1,5 @@
 import 'package:easy_ui/easy_ui.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/widgets.dart' hide Icon;
 
 import 'order.dart';
 import 'order_card.dart';
@@ -46,9 +46,9 @@ class _OrdersPageState extends State<OrdersPage> {
             direction: LayoutDirection.horizontal,
             align: Alignment.centerLeft,
             children: [
-              const LayoutItem(
+              LayoutItem(
                 size: 1.fr,
-                child: Label(type: LabelType.title, text: 'Pedidos'),
+                child: const Label(type: LabelType.title, text: 'Pedidos'),
               ),
               Button(text: 'Voltar', variant: ButtonVariant.ghost, onPressed: widget.onBack),
             ],

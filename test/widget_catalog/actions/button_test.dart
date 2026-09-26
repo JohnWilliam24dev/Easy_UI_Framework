@@ -11,7 +11,7 @@ Widget _tela(Widget child) {
 }
 
 OutlinedBorder _shapeOf(ButtonStyle style) {
-  return style.shape!.resolve(<WidgetState>{})! as OutlinedBorder;
+  return style.shape!.resolve(<WidgetState>{})!;
 }
 
 void main() {

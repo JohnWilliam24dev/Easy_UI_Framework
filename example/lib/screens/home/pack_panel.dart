@@ -1,5 +1,5 @@
 import 'package:easy_ui/easy_ui.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/widgets.dart' hide Icon;
 
 /// Painel de demonstração: sempre os mesmos widgets. A aparência muda só
 /// conforme o `StylePack` ativo na subárvore onde ele é colocado.

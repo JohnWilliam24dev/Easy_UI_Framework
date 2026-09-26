@@ -1,5 +1,5 @@
 import 'package:easy_ui/easy_ui.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/widgets.dart' hide Icon;
 
 /// Tela de login de referência (seção 9 da documentação), com validação.
 ///

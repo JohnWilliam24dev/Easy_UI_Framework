@@ -1,6 +1,6 @@
 import 'package:easy_ui/easy_ui.dart';
 import 'package:flutter/material.dart' show Icons;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/widgets.dart' hide Icon;
 
 import 'order.dart';
 

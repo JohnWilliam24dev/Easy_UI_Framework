@@ -89,7 +89,7 @@ final class Percent extends Dimension {
     final parent = context.parentExtent;
     if (parent == null || !parent.isFinite) {
       throw StateError(
-        'Percent (${value}%) precisa de um pai com tamanho finito no eixo em '
+        'Percent ($value%) precisa de um pai com tamanho finito no eixo em '
         'que foi aplicado (ex: dentro de um scroll o eixo é ilimitado). '
         'Use px, vw ou vh nesse caso.',
       );
