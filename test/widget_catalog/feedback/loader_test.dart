@@ -50,7 +50,13 @@ void main() {
 
       await tester.tapAt(const Offset(50, 50));
       expect(toques, 0);
-      expect(find.byType(AbsorbPointer), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(Loader),
+          matching: find.byType(AbsorbPointer),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('usa a cor de fundo do tema, semitransparente', (tester) async {
@@ -58,7 +64,12 @@ void main() {
         tester,
         const Tela(child: Stack(children: [Loader(mode: LoaderMode.overlay)])),
       );
-      final box = tester.widget<ColoredBox>(find.byType(ColoredBox));
+      final box = tester.widget<ColoredBox>(
+        find.descendant(
+          of: find.byType(Loader),
+          matching: find.byType(ColoredBox),
+        ),
+      );
       expect(box.color, testTokens.backgroundColor.withValues(alpha: 0.75));
     });
   });

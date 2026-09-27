@@ -55,12 +55,17 @@ void main() {
     Toast.show(
       builderContext,
       text: 'Some rápido',
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 300),
     );
     await tester.pump();
     expect(find.byType(SnackBar), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 600));
+    // O temporizador de auto-fechamento só é agendado depois que a animação
+    // de entrada termina (~250ms); um pump grande demais de uma vez só não
+    // alcança esse temporizador, criado no meio do caminho. Avança em duas
+    // etapas: uma para a entrada terminar, outra para exceder a duration.
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
     expect(find.byType(SnackBar), findsNothing);
   });
