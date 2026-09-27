@@ -115,10 +115,13 @@ class _ModalShell extends StatelessWidget {
           children: [
             Label(type: LabelType.subtitle, text: title),
             if (message != null) Label(type: LabelType.body, text: message!),
-            Div(
-              direction: LayoutDirection.horizontal,
-              position: LayoutPosition.right,
-              gap: 8.px,
+            // Wrap, não Div/Row: com textos maiores (localização, fonte
+            // maior por acessibilidade) os botões quebram linha em vez de
+            // estourar a largura fixa do modal.
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              runSpacing: 8,
               children: actions,
             ),
           ],

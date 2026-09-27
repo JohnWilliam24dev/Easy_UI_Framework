@@ -1,6 +1,7 @@
 import 'package:easy_ui/src/widget_catalog/feedback/toast.dart';
 import 'package:easy_ui/src/widget_catalog/layout/tela.dart';
 import 'package:flutter/material.dart' show SnackBar;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/pump_easy.dart';

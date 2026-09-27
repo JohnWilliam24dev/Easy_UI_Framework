@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show CircularProgressIndicator;
 import 'package:flutter/widgets.dart';
 
+import '../../kernel/kernel.dart';
 import '../../theme_layer/theme_layer.dart';
 import '../display/label.dart';
 import '../layout/div.dart';
