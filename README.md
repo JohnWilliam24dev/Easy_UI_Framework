@@ -1,8 +1,27 @@
 # Easy_UI_Framework
 
-Camada declarativa de UI sobre Flutter: menos verbosidade, tema explícito e responsividade automática.
+Camada declarativa de UI sobre Flutter: menos verbosidade, tema explícito e responsividade resolvida pelo framework.
 
-> Status: fase de planejamento (v0.1). Veja a arquitetura completa em [`docs/documentacao-framework.md`](docs/documentacao-framework.md).
+```dart
+Tela(
+  child: FormGroup(
+    position: LayoutPosition.center,
+    width: 50.vw,
+    children: [
+      const Label(type: LabelType.title, text: 'Login'),
+      InputField(name: 'username', hint: 'Username', validation: [isRequired(), minLength(4)]),
+      InputField(name: 'password', hint: 'Password', type: InputType.password, validation: [isPassword()]),
+      Button(text: 'Login', onSubmit: (values) => entrar(values['username']!)),
+    ],
+  ),
+)
+```
+
+## Documentação
+
+- **[Guia de uso e referência de API](docs/guia-de-uso.md)** — como o framework funciona, e todos os widgets com seus parâmetros.
+- [Arquitetura e decisões de design](docs/documentacao-framework.md) — o porquê de cada escolha (Decision Log).
+- [`example/`](example) — app de demonstração (login com validação, dois StylePacks lado a lado, listagem paginada).
 
 ## Arquitetura (4 camadas)
 
