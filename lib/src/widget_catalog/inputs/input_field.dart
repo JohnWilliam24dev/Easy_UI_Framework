@@ -33,6 +33,8 @@ class InputField extends StatefulWidget {
     super.key,
     this.name,
     this.hint,
+    this.label,
+    this.initialValue,
     this.type = InputType.text,
     this.validation = const <Validator>[],
     this.controller,
@@ -46,6 +48,8 @@ class InputField extends StatefulWidget {
 
   final String? name;
   final String? hint;
+  final String? label;
+  final String? initialValue;
   final InputType type;
   final List<Validator> validation;
   final TextEditingController? controller;
@@ -60,7 +64,8 @@ class InputField extends StatefulWidget {
   State<InputField> createState() => _InputFieldState();
 }
 
-class _InputFieldState extends State<InputField> implements FormFieldHandle {
+class _InputFieldState extends State<InputField>
+    implements FormFieldHandle<Object?> {
   bool _obscured = true;
   bool _touched = false;
   bool _revealed = false;
@@ -72,7 +77,8 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
   String? _registeredName;
 
   TextEditingController get _controller {
-    return widget.controller ?? (_ownController ??= TextEditingController());
+    return widget.controller ??
+        (_ownController ??= TextEditingController(text: widget.initialValue));
   }
 
   // ---- FormFieldHandle ----------------------------------------------------
@@ -81,13 +87,23 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
   String get name => _registeredName!;
 
   @override
-  String get value => _controller.text;
+  Object? get value => _controller.text;
 
   @override
   List<Validator> get validation => widget.validation;
 
   @override
   FocusNode get focusNode => _focusNode;
+
+  @override
+  void reset(Object? value) {
+    _controller.text = value?.toString() ?? widget.initialValue ?? '';
+    if (mounted)
+      setState(() {
+        _touched = false;
+        _revealed = false;
+      });
+  }
 
   @override
   void reveal() {
@@ -132,6 +148,10 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
     }
     if (widget.name != null) {
       _registeredName = widget.name;
+      final initial = controller.initialValueFor(widget.name!);
+      if (initial != null && widget.controller == null) {
+        _controller.text = initial.toString();
+      }
       controller.attach(this);
       controller.addListener(_onFormChanged);
     }
@@ -172,7 +192,7 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
 
   String? _currentError() {
     if (widget.validation.isEmpty) return null;
-    final all = _form?.values ?? const <String, String>{};
+    final all = _form?.values ?? const FormValues(<String, Object?>{});
     return runValidators(widget.validation, _controller.text, all);
   }
 
@@ -193,8 +213,8 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
     final pack = StylePackScope.of(context);
     final type = widget.type;
 
-    final error = widget.errorText ??
-        ((_touched || _revealed) ? _currentError() : null);
+    final error =
+        widget.errorText ?? ((_touched || _revealed) ? _currentError() : null);
 
     final isPassword = type == InputType.password;
     final isFreeText = type == InputType.text || type == InputType.search;
@@ -223,7 +243,8 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
       autofocus: widget.autofocus,
       obscureText: isPassword && _obscured,
       keyboardType: _keyboardFor(type),
-      textInputAction: widget.textInputAction ??
+      textInputAction:
+          widget.textInputAction ??
           (type == InputType.search ? TextInputAction.search : null),
       autocorrect: isFreeText,
       enableSuggestions: isFreeText,
@@ -237,6 +258,7 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
         tokens: tokens,
         pack: pack,
         hint: widget.hint,
+        label: widget.label,
         errorText: error,
         prefixIcon: prefix,
         suffixIcon: suffix,

@@ -14,6 +14,9 @@ enum InputStyleKind {
   filled,
 }
 
+/// Posição padrão do rótulo de um campo.
+enum InputLabelPosition { above, floating, none }
+
 /// Aparência dos campos de texto (`InputField`). Não conhece cores: elas
 /// vêm dos `ThemeTokens` na hora de montar o widget.
 @immutable
@@ -22,38 +25,44 @@ class InputStyleSpec {
   const InputStyleSpec.outline({
     this.radius = 8,
     this.elevation = ElevationLevel.none,
+    this.labelPosition = InputLabelPosition.floating,
   }) : kind = InputStyleKind.outline;
 
   /// Campo com borda bem arredondada (padrão de raio maior).
   const InputStyleSpec.rounded({
     this.radius = 16,
     this.elevation = ElevationLevel.none,
+    this.labelPosition = InputLabelPosition.floating,
   }) : kind = InputStyleKind.outline;
 
   /// Campo só com linha embaixo (visual denso, operacional).
   const InputStyleSpec.underline()
-      : kind = InputStyleKind.underline,
-        radius = 0,
-        elevation = ElevationLevel.none;
+    : kind = InputStyleKind.underline,
+      radius = 0,
+      elevation = ElevationLevel.none,
+      labelPosition = InputLabelPosition.above;
 
   /// Campo com fundo preenchido.
   const InputStyleSpec.filled({
     this.radius = 8,
     this.elevation = ElevationLevel.none,
+    this.labelPosition = InputLabelPosition.floating,
   }) : kind = InputStyleKind.filled;
 
   final InputStyleKind kind;
   final double radius;
   final ElevationLevel elevation;
+  final InputLabelPosition labelPosition;
 
   @override
   bool operator ==(Object other) {
     return other is InputStyleSpec &&
         other.kind == kind &&
         other.radius == radius &&
-        other.elevation == elevation;
+        other.elevation == elevation &&
+        other.labelPosition == labelPosition;
   }
 
   @override
-  int get hashCode => Object.hash(kind, radius, elevation);
+  int get hashCode => Object.hash(kind, radius, elevation, labelPosition);
 }

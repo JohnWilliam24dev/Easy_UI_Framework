@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart' show Colors, Dialog, showDialog;
+import 'package:flutter/material.dart'
+    show Colors, Dialog, showDialog, showModalBottomSheet;
 import 'package:flutter/widgets.dart';
 
 import '../../kernel/kernel.dart';
@@ -37,6 +38,7 @@ abstract final class Modal {
     String? message,
     String confirmText = 'Confirmar',
     String cancelText = 'Cancelar',
+    bool destructive = false,
   }) {
     return showDialog<bool>(
       context: context,
@@ -51,6 +53,7 @@ abstract final class Modal {
           ),
           Button(
             text: confirmText,
+            variant: destructive ? ButtonVariant.danger : ButtonVariant.solid,
             onPressed: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
@@ -71,7 +74,10 @@ abstract final class Modal {
         title: title,
         message: message,
         actions: [
-          Button(text: okText, onPressed: () => Navigator.of(dialogContext).pop()),
+          Button(
+            text: okText,
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
         ],
       ),
     );
@@ -96,13 +102,67 @@ abstract final class Modal {
       },
     );
   }
+
+  /// Modal de edição com ações de cancelar e salvar. O conteúdo pode ser um
+  /// [FormGroup] cujo botão de envio use `onSubmit` normalmente.
+  static Future<T?> form<T>(
+    BuildContext context, {
+    required String title,
+    required WidgetBuilder builder,
+    String cancelText = 'Cancelar',
+    String saveText = 'Salvar',
+    VoidCallback? onSave,
+  }) => showDialog<T>(
+    context: context,
+    builder: (dialogContext) => _ModalShell(
+      title: title,
+      actions: [
+        Button(
+          text: cancelText,
+          variant: ButtonVariant.ghost,
+          onPressed: () => Navigator.of(dialogContext).pop(),
+        ),
+        Button(text: saveText, onPressed: onSave),
+      ],
+      content: builder(dialogContext),
+    ),
+  );
+
+  /// Exibe conteúdo como bottom sheet, adequado para ações em telas pequenas.
+  static Future<T?> sheet<T>(
+    BuildContext context, {
+    required WidgetBuilder builder,
+    bool isScrollControlled = true,
+  }) => showModalBottomSheet<T>(
+    context: context,
+    isScrollControlled: isScrollControlled,
+    builder: builder,
+  );
+
+  /// Usa bottom sheet em larguras compactas e diálogo nas demais.
+  static Future<T?> adaptive<T>(
+    BuildContext context, {
+    required WidgetBuilder builder,
+    double sheetBelow = 600,
+  }) {
+    if (MediaQuery.sizeOf(context).width < sheetBelow) {
+      return sheet(context, builder: builder);
+    }
+    return custom<T>(context, builder: builder);
+  }
 }
 
 class _ModalShell extends StatelessWidget {
-  const _ModalShell({required this.title, this.message, required this.actions});
+  const _ModalShell({
+    required this.title,
+    this.message,
+    this.content,
+    required this.actions,
+  });
 
   final String title;
   final String? message;
+  final Widget? content;
   final List<Widget> actions;
 
   @override
@@ -115,6 +175,7 @@ class _ModalShell extends StatelessWidget {
           children: [
             Label(type: LabelType.subtitle, text: title),
             if (message != null) Label(type: LabelType.body, text: message!),
+            ?content,
             // Wrap, não Div/Row: com textos maiores (localização, fonte
             // maior por acessibilidade) os botões quebram linha em vez de
             // estourar a largura fixa do modal.

@@ -48,9 +48,18 @@ void main() {
           width: 100.px,
           height: 300.px,
           children: [
-            LayoutItem(size: 100.px, child: const SizedBox(key: a, width: 10)),
-            LayoutItem(size: 1.fr, child: const SizedBox(key: b, width: 10)),
-            LayoutItem(size: 2.fr, child: const SizedBox(key: c, width: 10)),
+            LayoutItem(
+              size: 100.px,
+              child: const SizedBox(key: a, width: 10),
+            ),
+            LayoutItem(
+              size: 1.fr,
+              child: const SizedBox(key: b, width: 10),
+            ),
+            LayoutItem(
+              size: 2.fr,
+              child: const SizedBox(key: c, width: 10),
+            ),
           ],
         ),
       ),
@@ -78,7 +87,8 @@ void main() {
       ),
     );
 
-    final distance = tester.getTopLeft(find.byKey(b)).dy -
+    final distance =
+        tester.getTopLeft(find.byKey(b)).dy -
         tester.getTopLeft(find.byKey(a)).dy;
     expect(distance, closeTo(30, 0.01)); // 10 (altura de A) + 20 (gap)
   });
@@ -100,7 +110,8 @@ void main() {
       ),
     );
 
-    final distance = tester.getTopLeft(find.byKey(b)).dx -
+    final distance =
+        tester.getTopLeft(find.byKey(b)).dx -
         tester.getTopLeft(find.byKey(a)).dx;
     expect(distance, closeTo(35, 0.01)); // 30 (largura de A) + 5 (gap)
   });
@@ -142,10 +153,49 @@ void main() {
       ),
     );
 
-    expect(
-      tester.getTopLeft(find.byKey(a)),
-      tester.getTopLeft(find.byKey(b)),
+    expect(tester.getTopLeft(find.byKey(a)), tester.getTopLeft(find.byKey(b)));
+  });
+
+  testWidgets('wrap quebra linha e respeita runGap', (tester) async {
+    const a = Key('a');
+    const b = Key('b');
+
+    await tester.pumpWidget(
+      harness(
+        LayoutEngine(
+          direction: LayoutDirection.wrap,
+          width: 100.px,
+          gap: 10.px,
+          runGap: 7.px,
+          children: const [
+            SizedBox(key: a, width: 60, height: 10),
+            SizedBox(key: b, width: 60, height: 10),
+          ],
+        ),
+      ),
     );
+
+    expect(tester.getTopLeft(find.byKey(b)).dy, closeTo(17, 0.01));
+  });
+
+  testWidgets('stackBelow empilha em pai estreito', (tester) async {
+    const a = Key('a');
+    const b = Key('b');
+
+    await tester.pumpWidget(
+      harness(
+        LayoutEngine(
+          stackBelow: 600,
+          gap: 5.px,
+          children: const [
+            SizedBox(key: a, width: 20, height: 10),
+            SizedBox(key: b, width: 20, height: 10),
+          ],
+        ),
+      ),
+    );
+
+    expect(tester.getTopLeft(find.byKey(b)).dy, closeTo(15, 0.01));
   });
 
   testWidgets('pct em eixo ilimitado lança erro claro', (tester) async {

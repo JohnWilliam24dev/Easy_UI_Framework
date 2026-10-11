@@ -3,7 +3,16 @@ import 'package:flutter/widgets.dart';
 import '../../theme_layer/theme_layer.dart';
 
 /// Papel tipográfico do texto.
-enum LabelType { title, subtitle, body, caption, error }
+enum LabelType {
+  title,
+  subtitle,
+  body,
+  caption,
+  error,
+  overline,
+  heading,
+  fieldLabel,
+}
 
 /// Monta o `TextStyle` de um [LabelType] a partir dos tokens e da escala
 /// tipográfica do pack ativo.
@@ -12,20 +21,50 @@ TextStyle labelStyleFor({
   required LabelStyleSpec spec,
   required LabelType type,
 }) {
-  final (scale, weight, color) = switch (type) {
-    LabelType.title => (spec.titleScale, spec.titleWeight, tokens.textColor),
+  final (scale, weight, color, letterSpacing) = switch (type) {
+    LabelType.title => (
+      spec.titleScale,
+      spec.titleWeight,
+      tokens.headingColor,
+      0.0,
+    ),
     LabelType.subtitle => (
-        spec.subtitleScale,
-        spec.subtitleWeight,
-        tokens.textColor,
-      ),
-    LabelType.body => (spec.bodyScale, FontWeight.w400, tokens.textColor),
+      spec.subtitleScale,
+      spec.subtitleWeight,
+      tokens.headingColor,
+      0.0,
+    ),
+    LabelType.body => (spec.bodyScale, FontWeight.w400, tokens.textColor, 0.0),
     LabelType.caption => (
-        spec.captionScale,
-        FontWeight.w400,
-        tokens.mutedTextColor,
-      ),
-    LabelType.error => (spec.bodyScale, FontWeight.w500, tokens.errorColor),
+      spec.captionScale,
+      FontWeight.w400,
+      tokens.mutedTextColor,
+      0.0,
+    ),
+    LabelType.error => (
+      spec.bodyScale,
+      FontWeight.w500,
+      tokens.errorColor,
+      0.0,
+    ),
+    LabelType.overline => (
+      spec.overlineScale,
+      FontWeight.w600,
+      tokens.mutedTextColor,
+      spec.overlineLetterSpacing,
+    ),
+    LabelType.heading => (
+      spec.headingScale,
+      spec.titleWeight,
+      tokens.headingColor,
+      0.0,
+    ),
+    LabelType.fieldLabel => (
+      spec.fieldLabelScale,
+      FontWeight.w600,
+      tokens.mutedTextColor,
+      0.0,
+    ),
   };
 
   return TextStyle(
@@ -33,6 +72,8 @@ TextStyle labelStyleFor({
     fontSize: tokens.baseFontSize * scale,
     fontWeight: weight,
     fontFamily: tokens.fontFamily,
+    height: spec.lineHeight,
+    letterSpacing: letterSpacing,
   );
 }
 
@@ -48,6 +89,8 @@ class Label extends StatelessWidget {
     this.type = LabelType.body,
     this.textAlign,
     this.maxLines,
+    this.color,
+    this.lineHeight,
   });
 
   final String text;
@@ -56,6 +99,8 @@ class Label extends StatelessWidget {
 
   /// Limita o número de linhas (o excesso vira reticências).
   final int? maxLines;
+  final Color Function(ThemeTokens tokens)? color;
+  final double? lineHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +111,10 @@ class Label extends StatelessWidget {
     );
     return Text(
       text,
-      style: style,
+      style: style.copyWith(
+        color: color?.call(AppThemeScope.tokensOf(context)),
+        height: lineHeight,
+      ),
       textAlign: textAlign,
       maxLines: maxLines,
       overflow: maxLines == null ? null : TextOverflow.ellipsis,

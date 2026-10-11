@@ -1,14 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 
 import 'validators.dart';
 
 /// O que o [FormController] precisa saber de cada campo registrado.
 /// Implementado pelo estado do `InputField`.
-abstract interface class FormFieldHandle {
+abstract interface class FormFieldHandle<T> {
   String get name;
-  String get value;
+  T get value;
   List<Validator> get validation;
   FocusNode get focusNode;
+  void reset(Object? value);
 
   /// Passa a exibir os erros deste campo (mesmo que o usuário não o tenha
   /// tocado).
@@ -20,12 +23,18 @@ abstract interface class FormFieldHandle {
 /// Os `InputField`s com `name` se registram aqui ao entrar na árvore e saem
 /// ao serem removidos; o `Button` com `onSubmit` consulta e valida.
 class FormController extends ChangeNotifier {
-  final Map<String, FormFieldHandle> _fields = <String, FormFieldHandle>{};
+  FormController({
+    Map<String, Object?> initialValues = const <String, Object?>{},
+  }) : _initialValues = initialValues;
+  final Map<String, FormFieldHandle<Object?>> _fields =
+      <String, FormFieldHandle<Object?>>{};
+  final Map<String, Object?> _initialValues;
+  FutureOr<void> Function(FormValues values)? onSubmit;
   bool _disposed = false;
 
   /// Valores atuais, por `name`.
   FormValues get values {
-    return Map<String, String>.unmodifiable(<String, String>{
+    return FormValues(<String, Object?>{
       for (final field in _fields.values) field.name: field.value,
     });
   }
@@ -55,7 +64,20 @@ class FormController extends ChangeNotifier {
     return firstInvalid == null;
   }
 
-  void attach(FormFieldHandle field) {
+  void reset() {
+    for (final field in _fields.values) {
+      field.reset(_initialValues[field.name]);
+    }
+    notifyListeners();
+  }
+
+  Object? initialValueFor(String name) => _initialValues[name];
+
+  /// Informa se o formulário recebeu um valor inicial para [name], inclusive
+  /// quando esse valor é `null`.
+  bool hasInitialValueFor(String name) => _initialValues.containsKey(name);
+
+  void attach(FormFieldHandle<Object?> field) {
     if (_fields.containsKey(field.name)) {
       // Um `throw` síncrono aqui aconteceria no meio de
       // `didChangeDependencies`/build do segundo campo, deixando a árvore de
@@ -79,7 +101,7 @@ class FormController extends ChangeNotifier {
     _notifyAfterFrame();
   }
 
-  void detach(FormFieldHandle field) {
+  void detach(FormFieldHandle<Object?> field) {
     if (identical(_fields[field.name], field)) {
       _fields.remove(field.name);
     }

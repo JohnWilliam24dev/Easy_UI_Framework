@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart' show InkWell, Material, MaterialType;
 import 'package:flutter/widgets.dart';
 
 import '../../theme_layer/theme_layer.dart';
@@ -13,10 +16,19 @@ import '../../theme_layer/theme_layer.dart';
 /// Card(child: Div(children: [Label(text: 'Pedido #123'), ...]))
 /// ```
 class Card extends StatelessWidget {
-  const Card({super.key, required this.child, this.elevation, this.onTap});
+  const Card({
+    super.key,
+    required this.child,
+    this.elevation,
+    this.variant,
+    this.paddingSteps,
+    this.onTap,
+  });
 
   final Widget child;
   final ElevationLevel? elevation;
+  final CardVariant? variant;
+  final double? paddingSteps;
   final VoidCallback? onTap;
 
   @override
@@ -25,11 +37,24 @@ class Card extends StatelessWidget {
     final pack = StylePackScope.of(context);
     final spec = pack.card;
     final level = elevation ?? spec.elevation;
+    final activeVariant = variant ?? spec.variant;
+    final isGlass = activeVariant == CardVariant.glass;
+    final background = switch (activeVariant) {
+      CardVariant.tinted => tokens.selectedColor,
+      CardVariant.glass => tokens.panelColor.withValues(alpha: 0.72),
+      _ => tokens.surfaceColor,
+    };
 
     Widget card = DecoratedBox(
       decoration: BoxDecoration(
-        color: tokens.surfaceColor,
+        color: background,
         borderRadius: BorderRadius.circular(spec.radius),
+        border: activeVariant == CardVariant.outlined || isGlass
+            ? Border.all(
+                color: tokens.panelBorderColor,
+                width: spec.borderWidth,
+              )
+            : null,
         boxShadow: level == ElevationLevel.none
             ? null
             : [
@@ -41,16 +66,30 @@ class Card extends StatelessWidget {
               ],
       ),
       child: Padding(
-        padding: EdgeInsets.all(pack.space(tokens, spec.paddingSteps)),
+        padding: EdgeInsets.all(
+          pack.space(tokens, paddingSteps ?? spec.paddingSteps),
+        ),
         child: child,
       ),
     );
 
+    if (isGlass && spec.blur > 0) {
+      card = ClipRRect(
+        borderRadius: BorderRadius.circular(spec.radius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: spec.blur, sigmaY: spec.blur),
+          child: card,
+        ),
+      );
+    }
     final tap = onTap;
     if (tap != null) {
       card = ClipRRect(
         borderRadius: BorderRadius.circular(spec.radius),
-        child: GestureDetector(onTap: tap, behavior: HitTestBehavior.opaque, child: card),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(onTap: tap, child: card),
+        ),
       );
     }
     return card;

@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
+import '../responsive/responsive_resolver.dart';
+import '../responsive/responsive_value.dart';
 import '../unit_system/unit_system.dart';
 import 'alignment_mapper.dart';
 import 'layout_position.dart';
@@ -16,6 +18,9 @@ enum LayoutDirection {
 
   /// Sobrepostos (Stack).
   layered,
+
+  /// Filhos em linhas que quebram quando não há mais espaço horizontal.
+  wrap,
 }
 
 /// Declara o tamanho de um filho no eixo principal do [LayoutEngine].
@@ -59,14 +64,30 @@ class LayoutEngine extends StatelessWidget {
     this.position,
     this.align = Alignment.topLeft,
     this.gap,
+    this.runGap,
     this.width,
     this.height,
-  })  : assert(gap is! Fr, 'gap não pode ser Fr.'),
-        assert(width is! Fr, 'width não pode ser Fr.'),
-        assert(height is! Fr, 'height não pode ser Fr.');
+    this.minWidth,
+    this.maxWidth,
+    this.maxHeight,
+    this.padding,
+    this.fill = false,
+    this.scrollable = false,
+    this.stackBelow,
+  }) : assert(gap is! Fr, 'gap não pode ser Fr.'),
+       assert(runGap is! Fr, 'runGap não pode ser Fr.'),
+       assert(width is! Fr, 'width não pode ser Fr.'),
+       assert(height is! Fr, 'height não pode ser Fr.'),
+       assert(minWidth is! Fr, 'minWidth não pode ser Fr.'),
+       assert(maxWidth is! Fr, 'maxWidth não pode ser Fr.'),
+       assert(maxHeight is! Fr, 'maxHeight não pode ser Fr.'),
+       assert(padding is! Fr, 'padding não pode ser Fr.'),
+       assert(stackBelow == null || stackBelow > 0, 'stackBelow deve ser > 0.');
 
   final List<Widget> children;
-  final LayoutDirection direction;
+
+  /// Direção fixa ou uma [ResponsiveValue] resolvida pela largura do pai.
+  final Object direction;
 
   /// Onde o motor fica dentro do pai. `null` deixa o pai decidir.
   final LayoutPosition? position;
@@ -77,12 +98,20 @@ class LayoutEngine extends StatelessWidget {
 
   /// Espaço entre filhos consecutivos (ignorado em `layered`).
   final Dimension? gap;
+  final Dimension? runGap;
 
   /// Largura do motor. `null` deixa o pai decidir.
   final Dimension? width;
 
   /// Altura do motor. `null` deixa o pai decidir.
   final Dimension? height;
+  final Dimension? minWidth;
+  final Dimension? maxWidth;
+  final Dimension? maxHeight;
+  final Dimension? padding;
+  final bool fill;
+  final bool scrollable;
+  final double? stackBelow;
 
   /// Precisão usada para converter o fator do `fr` no `flex` inteiro do
   /// Flutter (permite fatores como 1.5).
@@ -98,17 +127,42 @@ class LayoutEngine extends StatelessWidget {
 
         final resolvedWidth = width?.resolve(widthContext);
         final resolvedHeight = height?.resolve(heightContext);
+        final resolvedMinWidth = minWidth?.resolve(widthContext);
+        final resolvedMaxWidth = maxWidth?.resolve(widthContext);
+        final resolvedMaxHeight = maxHeight?.resolve(heightContext);
+        final resolvedPadding = padding?.resolve(widthContext) ?? 0;
+        final resolvedDirection = _resolveDirection(constraints.maxWidth);
 
         // Extensão real disponível para o conteúdo, já respeitando as
         // restrições do pai (um SizedBox não pode passar do que o pai permite).
+        final availableWidth = resolvedMaxWidth == null
+            ? constraints.maxWidth
+            : math.min(constraints.maxWidth, resolvedMaxWidth);
+        final availableHeight = resolvedMaxHeight == null
+            ? constraints.maxHeight
+            : math.min(constraints.maxHeight, resolvedMaxHeight);
         final innerWidth = resolvedWidth != null
             ? constraints.constrainWidth(resolvedWidth)
-            : constraints.maxWidth;
+            : availableWidth;
         final innerHeight = resolvedHeight != null
             ? constraints.constrainHeight(resolvedHeight)
-            : constraints.maxHeight;
+            : availableHeight;
 
-        final content = _buildContent(base, innerWidth, innerHeight);
+        Widget content = _buildContent(
+          base,
+          innerWidth - (resolvedPadding * 2),
+          innerHeight - (resolvedPadding * 2),
+          resolvedDirection,
+        );
+        if (resolvedPadding > 0) {
+          content = Padding(
+            padding: EdgeInsets.all(resolvedPadding),
+            child: content,
+          );
+        }
+        if (scrollable) {
+          content = SingleChildScrollView(child: content);
+        }
 
         Widget result = content;
         if (resolvedWidth != null || resolvedHeight != null) {
@@ -119,6 +173,20 @@ class LayoutEngine extends StatelessWidget {
           );
         }
 
+        if (resolvedMinWidth != null ||
+            resolvedMaxWidth != null ||
+            resolvedMaxHeight != null) {
+          result = ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: resolvedMinWidth ?? 0,
+              maxWidth: resolvedMaxWidth ?? double.infinity,
+              maxHeight: resolvedMaxHeight ?? double.infinity,
+            ),
+            child: result,
+          );
+          result = Align(alignment: Alignment.topCenter, child: result);
+        }
+
         final placement = position;
         if (placement == null) return result;
         return Align(alignment: placement.alignment, child: result);
@@ -126,8 +194,26 @@ class LayoutEngine extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(UnitContext base, double innerWidth, double innerHeight) {
-    if (direction == LayoutDirection.layered) {
+  LayoutDirection _resolveDirection(double parentWidth) {
+    if (stackBelow != null) {
+      return parentWidth < stackBelow!
+          ? LayoutDirection.vertical
+          : LayoutDirection.horizontal;
+    }
+    final value = direction;
+    if (value is ResponsiveValue<LayoutDirection>) {
+      return ResponsiveResolver().pick(parentWidth, value);
+    }
+    return value as LayoutDirection;
+  }
+
+  Widget _buildContent(
+    UnitContext base,
+    double innerWidth,
+    double innerHeight,
+    LayoutDirection resolvedDirection,
+  ) {
+    if (resolvedDirection == LayoutDirection.layered) {
       return Stack(
         alignment: align,
         children: [
@@ -137,7 +223,21 @@ class LayoutEngine extends StatelessWidget {
       );
     }
 
-    final vertical = direction == LayoutDirection.vertical;
+    if (resolvedDirection == LayoutDirection.wrap) {
+      final widthContext = base.withParentExtent(innerWidth);
+      final gapExtent = gap?.resolve(widthContext) ?? 0;
+      final runGapExtent = runGap?.resolve(widthContext) ?? gapExtent;
+      return Wrap(
+        spacing: gapExtent,
+        runSpacing: runGapExtent,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final child in children) _sizeWrapChild(child, widthContext),
+        ],
+      );
+    }
+
+    final vertical = resolvedDirection == LayoutDirection.vertical;
     final mainExtent = vertical ? innerHeight : innerWidth;
     final mainContext = base.withParentExtent(mainExtent);
     final canFlex = mainExtent.isFinite;
@@ -153,10 +253,11 @@ class LayoutEngine extends StatelessWidget {
       items.add(_sizeChild(children[i], mainContext, vertical, canFlex));
     }
 
-    final mainSize =
-        position == null ? MainAxisSize.max : MainAxisSize.min;
+    final mainSize = position == null ? MainAxisSize.max : MainAxisSize.min;
     final mainAlign = mainAxisFromAlignment(vertical ? align.y : align.x);
-    final crossAlign = crossAxisFromAlignment(vertical ? align.x : align.y);
+    final crossAlign = fill
+        ? CrossAxisAlignment.stretch
+        : crossAxisFromAlignment(vertical ? align.x : align.y);
 
     return vertical
         ? Column(
@@ -171,6 +272,16 @@ class LayoutEngine extends StatelessWidget {
             crossAxisAlignment: crossAlign,
             children: items,
           );
+  }
+
+  Widget _sizeWrapChild(Widget child, UnitContext widthContext) {
+    if (child is! LayoutItem || child.size is Fr) {
+      return child is LayoutItem ? child.child : child;
+    }
+    return SizedBox(
+      width: child.size.resolve(widthContext),
+      child: child.child,
+    );
   }
 
   Widget _sizeChild(

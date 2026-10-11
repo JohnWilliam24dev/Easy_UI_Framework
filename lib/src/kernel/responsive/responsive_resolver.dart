@@ -27,6 +27,11 @@ class ResponsiveResolver {
     return value.resolve(sizeFor(width));
   }
 
+  /// Informa se [width] alcançou o breakpoint nomeado configurado.
+  bool isAtLeast(String name, double width) {
+    return width >= breakpoints.namedValue(name);
+  }
+
   /// Interpola linearmente entre [atMin] e [atMax] conforme [width] varia de
   /// `interpolationStart` a `interpolationEnd`. Fora da faixa, o valor fica
   /// preso nas pontas (sem extrapolar).
@@ -43,11 +48,7 @@ class ResponsiveResolver {
   }
 
   /// Igual a [interpolate], mas arredondando para inteiro (ex: nº de colunas).
-  int interpolateInt(
-    double width, {
-    required int atMin,
-    required int atMax,
-  }) {
+  int interpolateInt(double width, {required int atMin, required int atMax}) {
     return interpolate(
       width,
       atMin: atMin.toDouble(),

@@ -26,8 +26,8 @@ class AppThemeScope extends StatelessWidget {
   }
 
   static _AppThemeInherited _inheritedOf(BuildContext context) {
-    final inherited =
-        context.dependOnInheritedWidgetOfExactType<_AppThemeInherited>();
+    final inherited = context
+        .dependOnInheritedWidgetOfExactType<_AppThemeInherited>();
     if (inherited == null) {
       throw FlutterError(
         'Nenhum AppThemeScope encontrado acima deste widget.\n'

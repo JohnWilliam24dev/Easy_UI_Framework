@@ -34,9 +34,11 @@ class Grid extends StatelessWidget {
     this.gap,
     this.scrollable = false,
     this.breakpoints,
-  })  : assert(minCell > 0, 'minCell deve ser > 0.'),
-        assert(maxCell >= minCell, 'maxCell deve ser >= minCell.'),
-        assert(cellRatio > 0, 'cellRatio deve ser > 0.');
+    this.minCellWidth,
+    this.cellHeight,
+  }) : assert(minCell > 0, 'minCell deve ser > 0.'),
+       assert(maxCell >= minCell, 'maxCell deve ser >= minCell.'),
+       assert(cellRatio > 0, 'cellRatio deve ser > 0.');
 
   final List<Widget> children;
   final int minCell;
@@ -48,22 +50,72 @@ class Grid extends StatelessWidget {
   /// Breakpoints usados na interpolação. Padrão: `Breakpoints.standard`.
   final Breakpoints? breakpoints;
 
+  /// Grade que calcula automaticamente a quantidade de colunas a partir da
+  /// largura mínima desejada para cada célula.
+  const Grid.fit({
+    super.key,
+    required this.children,
+    required this.minCellWidth,
+    this.cellHeight,
+    this.gap,
+    this.scrollable = false,
+  }) : minCell = 1,
+       maxCell = 1,
+       cellRatio = 1,
+       breakpoints = null,
+       assert(
+         minCellWidth == null || minCellWidth > 0,
+         'minCellWidth deve ser > 0.',
+       );
+
+  final double? minCellWidth;
+  final double? cellHeight;
+
   @override
   Widget build(BuildContext context) {
     final tokens = AppThemeScope.tokensOf(context);
     final pack = StylePackScope.of(context);
-    final resolver = ResponsiveResolver(breakpoints: breakpoints ?? Breakpoints.standard);
+    final resolver = ResponsiveResolver(
+      breakpoints: breakpoints ?? Breakpoints.standard,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
+        final gapPx = (gap ?? Px(pack.space(tokens, 2))).resolve(
+          UnitContext.of(context, parentExtent: width),
+        );
+        final fit = minCellWidth;
+        if (fit != null) {
+          final columns = ((width + gapPx) / (fit + gapPx)).floor().clamp(
+            1,
+            99,
+          );
+          return GridView.builder(
+            shrinkWrap: !scrollable,
+            physics: scrollable ? null : const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            gridDelegate: cellHeight == null
+                ? SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    mainAxisSpacing: gapPx,
+                    crossAxisSpacing: gapPx,
+                  )
+                : SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    mainAxisExtent: cellHeight,
+                    mainAxisSpacing: gapPx,
+                    crossAxisSpacing: gapPx,
+                  ),
+            itemCount: children.length,
+            itemBuilder: (context, index) => children[index],
+          );
+        }
         final columns = resolver.interpolateInt(
           width,
           atMin: minCell,
           atMax: maxCell,
         );
-        final gapPx = (gap ?? Px(pack.space(tokens, 2)))
-            .resolve(UnitContext.of(context, parentExtent: width));
 
         return GridView.builder(
           shrinkWrap: !scrollable,

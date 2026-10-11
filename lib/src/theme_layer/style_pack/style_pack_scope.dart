@@ -11,16 +11,8 @@ class StylePackScope extends InheritedWidget {
   const StylePackScope({super.key, required this.pack, required super.child});
 
   /// Usa um pack registrado com `StylePack.define`.
-  factory StylePackScope.named(
-    String name, {
-    Key? key,
-    required Widget child,
-  }) {
-    return StylePackScope(
-      key: key,
-      pack: StylePack.byName(name),
-      child: child,
-    );
+  factory StylePackScope.named(String name, {Key? key, required Widget child}) {
+    return StylePackScope(key: key, pack: StylePack.byName(name), child: child);
   }
 
   final StylePack pack;

@@ -43,7 +43,7 @@ void main() {
   });
 
   test('barrel exporta FormGroup e os validadores', () {
-    const FormValues nada = <String, String>{};
+    const FormValues nada = FormValues(<String, Object?>{});
     expect(const FormGroup().children, isEmpty);
     expect(isRequired()('', nada), isNotNull);
     expect(minLength(3)('ab', nada), isNotNull);

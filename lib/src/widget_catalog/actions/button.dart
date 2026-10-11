@@ -21,7 +21,15 @@ enum ButtonVariant {
   /// Como `solid`, mas sempre com cantos totalmente arredondados,
   /// independente do pack ativo.
   pill,
+
+  /// Ação destrutiva, usando `errorColor` do tema.
+  danger,
+
+  /// Ação textual com semântica de link.
+  link,
 }
+
+enum ButtonSize { compact, standard, large }
 
 /// Botão de ação: Elevated/Outlined/TextButton + estado de carregamento,
 /// pintado com os tokens e a "pele" do `ButtonStyleSpec` do pack ativo.
@@ -54,14 +62,16 @@ class Button extends StatefulWidget {
     this.disableWhenInvalid = false,
     this.loading = false,
     this.expanded = false,
-  })  : assert(
-          onPressed == null || onSubmit == null,
-          'Use onPressed ou onSubmit, não os dois.',
-        ),
-        assert(
-          !disableWhenInvalid || onSubmit != null,
-          'disableWhenInvalid só faz sentido junto de onSubmit.',
-        );
+    this.icon,
+    this.size = ButtonSize.standard,
+  }) : assert(
+         onPressed == null || onSubmit == null,
+         'Use onPressed ou onSubmit, não os dois.',
+       ),
+       assert(
+         !disableWhenInvalid || onSubmit != null,
+         'disableWhenInvalid só faz sentido junto de onSubmit.',
+       );
 
   final String text;
   final ButtonVariant variant;
@@ -70,6 +80,8 @@ class Button extends StatefulWidget {
   final bool disableWhenInvalid;
   final bool loading;
   final bool expanded;
+  final IconData? icon;
+  final ButtonSize size;
 
   @override
   State<Button> createState() => _ButtonState();
@@ -100,10 +112,9 @@ class _ButtonState extends State<Button> {
 
   @override
   Widget build(BuildContext context) {
-    final submit = widget.onSubmit;
-    if (submit == null) return _buildButton(context, widget.onPressed);
-
     final form = FormScope.maybeOf(context)?.controller;
+    final submit = widget.onSubmit ?? form?.onSubmit;
+    if (submit == null) return _buildButton(context, widget.onPressed);
     if (form == null) {
       throw FlutterError(
         'Button com onSubmit precisa estar dentro de um FormGroup.\n'
@@ -136,10 +147,15 @@ class _ButtonState extends State<Button> {
     final spec = pack.button;
 
     final filled =
-        variant == ButtonVariant.solid || variant == ButtonVariant.pill;
-    final foreground = filled ? tokens.onPrimaryColor : tokens.primaryColor;
-    final radius =
-        variant == ButtonVariant.pill ? ButtonStyleSpec.pillRadius : spec.radius;
+        variant == ButtonVariant.solid ||
+        variant == ButtonVariant.pill ||
+        variant == ButtonVariant.danger;
+    final danger = variant == ButtonVariant.danger;
+    final mainColor = danger ? tokens.errorColor : tokens.primaryColor;
+    final foreground = filled ? tokens.onPrimaryColor : mainColor;
+    final radius = variant == ButtonVariant.pill
+        ? ButtonStyleSpec.pillRadius
+        : spec.radius;
 
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(radius),
@@ -147,7 +163,12 @@ class _ButtonState extends State<Button> {
     final padding = EdgeInsets.symmetric(
       horizontal: spec.horizontalPadding * pack.spacingScale,
     );
-    final minimumSize = Size(0, spec.minHeight);
+    final multiplier = switch (widget.size) {
+      ButtonSize.compact => 0.82,
+      ButtonSize.standard => 1.0,
+      ButtonSize.large => 1.18,
+    };
+    final minimumSize = Size(0, spec.minHeight * multiplier);
     final textStyle = TextStyle(
       fontSize: tokens.baseFontSize,
       fontWeight: spec.fontWeight,
@@ -155,6 +176,16 @@ class _ButtonState extends State<Button> {
     );
 
     Widget content = Text(text);
+    if (widget.icon != null && !loading) {
+      content = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(widget.icon, size: spec.iconSize, color: foreground),
+          SizedBox(width: spec.iconGap),
+          Text(text),
+        ],
+      );
+    }
     if (loading) {
       content = Stack(
         alignment: Alignment.center,
@@ -163,10 +194,7 @@ class _ButtonState extends State<Button> {
           SizedBox(
             width: 18,
             height: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: foreground,
-            ),
+            child: CircularProgressIndicator(strokeWidth: 2, color: foreground),
           ),
         ],
       );
@@ -175,50 +203,55 @@ class _ButtonState extends State<Button> {
     final VoidCallback? handler = loading ? _ignore : onTap;
 
     final Widget button = switch (variant) {
-      ButtonVariant.solid || ButtonVariant.pill => ElevatedButton(
-          onPressed: handler,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: tokens.primaryColor,
-            foregroundColor: tokens.onPrimaryColor,
-            disabledBackgroundColor: tokens.borderColor,
-            disabledForegroundColor: tokens.mutedTextColor,
-            elevation: 0,
-            shape: shape,
-            minimumSize: minimumSize,
-            padding: padding,
-            textStyle: textStyle,
-          ),
-          child: content,
+      ButtonVariant.solid ||
+      ButtonVariant.pill ||
+      ButtonVariant.danger => ElevatedButton(
+        onPressed: handler,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: mainColor,
+          foregroundColor: tokens.onPrimaryColor,
+          disabledBackgroundColor: tokens.borderColor,
+          disabledForegroundColor: tokens.mutedTextColor,
+          elevation: 0,
+          shape: shape,
+          minimumSize: minimumSize,
+          padding: padding,
+          textStyle: textStyle,
         ),
+        child: content,
+      ),
       ButtonVariant.outline => OutlinedButton(
-          onPressed: handler,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: tokens.primaryColor,
-            disabledForegroundColor: tokens.mutedTextColor,
-            side: BorderSide(color: tokens.primaryColor),
-            shape: shape,
-            minimumSize: minimumSize,
-            padding: padding,
-            textStyle: textStyle,
-          ),
-          child: content,
+        onPressed: handler,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: mainColor,
+          disabledForegroundColor: tokens.mutedTextColor,
+          side: BorderSide(color: mainColor),
+          shape: shape,
+          minimumSize: minimumSize,
+          padding: padding,
+          textStyle: textStyle,
         ),
-      ButtonVariant.ghost => TextButton(
-          onPressed: handler,
-          style: TextButton.styleFrom(
-            foregroundColor: tokens.primaryColor,
-            disabledForegroundColor: tokens.mutedTextColor,
-            shape: shape,
-            minimumSize: minimumSize,
-            padding: padding,
-            textStyle: textStyle,
-          ),
-          child: content,
+        child: content,
+      ),
+      ButtonVariant.ghost || ButtonVariant.link => TextButton(
+        onPressed: handler,
+        style: TextButton.styleFrom(
+          foregroundColor: mainColor,
+          disabledForegroundColor: tokens.mutedTextColor,
+          shape: shape,
+          minimumSize: minimumSize,
+          padding: padding,
+          textStyle: textStyle,
         ),
+        child: variant == ButtonVariant.link
+            ? DefaultTextStyle.merge(
+                style: const TextStyle(decoration: TextDecoration.underline),
+                child: content,
+              )
+            : content,
+      ),
     };
 
-    return expanded
-        ? SizedBox(width: double.infinity, child: button)
-        : button;
+    return expanded ? SizedBox(width: double.infinity, child: button) : button;
   }
 }

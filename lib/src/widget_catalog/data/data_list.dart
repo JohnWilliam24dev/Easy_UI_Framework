@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart' show CircularProgressIndicator;
 import 'package:flutter/widgets.dart';
 
-import '../actions/button.dart';
-import '../display/label.dart';
+import '../feedback/empty_state.dart';
+import '../feedback/error_state.dart';
 
 /// Busca uma página de dados. Deve devolver menos de [limit] itens quando
 /// não houver mais páginas (o `DataList` usa isso para saber quando parar).
@@ -43,6 +43,22 @@ class DataList<T> extends StatefulWidget {
 
   /// Separador entre itens (ex: `Divider()`). Sem separador por padrão.
   final Widget Function(BuildContext context, int index)? separatorBuilder;
+
+  /// Lista em memória, sem paginação nem chamadas assíncronas.
+  factory DataList.fromList({
+    Key? key,
+    required List<T> items,
+    required Widget Function(BuildContext context, T item) itemBuilder,
+    WidgetBuilder? emptyBuilder,
+    Widget Function(BuildContext context, int index)? separatorBuilder,
+  }) => DataList<T>(
+    key: key,
+    source: (page, _) async => page == 0 ? items : <T>[],
+    itemBuilder: itemBuilder,
+    limit: items.isEmpty ? 1 : items.length + 1,
+    emptyBuilder: emptyBuilder,
+    separatorBuilder: separatorBuilder,
+  );
 
   @override
   State<DataList<T>> createState() => _DataListState<T>();
@@ -97,11 +113,8 @@ class _DataListState<T> extends State<DataList<T>> {
   Widget build(BuildContext context) {
     if (_items.isEmpty) {
       if (_loading) return const Center(child: CircularProgressIndicator());
-      if (_error != null) return _ErrorState(error: _error!, onRetry: _loadNextPage);
-      return widget.emptyBuilder?.call(context) ??
-          Center(
-            child: Label(type: LabelType.caption, text: 'Nenhum item encontrado'),
-          );
+      if (_error != null) return ErrorState(onRetry: _loadNextPage);
+      return widget.emptyBuilder?.call(context) ?? const EmptyState();
     }
 
     final hasFooter = _loading || _error != null;
@@ -122,7 +135,7 @@ class _DataListState<T> extends State<DataList<T>> {
           if (_error != null) {
             return Padding(
               padding: const EdgeInsets.all(16),
-              child: _ErrorState(error: _error!, onRetry: _loadNextPage),
+              child: ErrorState(onRetry: _loadNextPage),
             );
           }
           return const Padding(
@@ -136,27 +149,6 @@ class _DataListState<T> extends State<DataList<T>> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.error, required this.onRetry});
-
-  final Object error;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Label(type: LabelType.error, text: 'Não foi possível carregar'),
-          const SizedBox(height: 8),
-          Button(text: 'Tentar de novo', variant: ButtonVariant.outline, onPressed: onRetry),
-        ],
       ),
     );
   }

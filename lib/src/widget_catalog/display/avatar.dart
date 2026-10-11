@@ -23,14 +23,20 @@ enum AvatarSize {
 class Avatar extends StatelessWidget {
   const Avatar({
     super.key,
-    required this.name,
+    this.name = '',
+    this.initials,
     this.imageUrl,
     this.size = AvatarSize.md,
+    this.diameter,
+    this.color,
   });
 
   final String name;
+  final String? initials;
   final String? imageUrl;
   final AvatarSize size;
+  final double? diameter;
+  final Color Function(ThemeTokens tokens)? color;
 
   static String initialsOf(String name) {
     final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
@@ -42,12 +48,12 @@ class Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = AppThemeScope.tokensOf(context);
-    final diameter = size.diameter;
+    final diameter = this.diameter ?? size.diameter;
     final url = imageUrl;
 
     Widget fallback = Center(
       child: Text(
-        initialsOf(name),
+        initials ?? initialsOf(name),
         style: TextStyle(
           color: tokens.onPrimaryColor,
           fontSize: diameter * 0.4,
@@ -62,7 +68,7 @@ class Avatar extends StatelessWidget {
         width: diameter,
         height: diameter,
         child: ColoredBox(
-          color: tokens.primaryColor,
+          color: color?.call(tokens) ?? tokens.accentColor,
           child: url == null
               ? fallback
               : Image.network(
