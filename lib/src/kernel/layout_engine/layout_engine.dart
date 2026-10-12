@@ -23,6 +23,9 @@ enum LayoutDirection {
   wrap,
 }
 
+/// Direção fixa ou adaptada à largura disponível do pai.
+typedef LayoutDirectionValue = LayoutDirection | ResponsiveValue<LayoutDirection>;
+
 /// Declara o tamanho de um filho no eixo principal do [LayoutEngine].
 ///
 /// - `px`, `vw`, `vh`, `pct`: o filho ocupa exatamente esse tamanho;
@@ -87,7 +90,7 @@ class LayoutEngine extends StatelessWidget {
   final List<Widget> children;
 
   /// Direção fixa ou uma [ResponsiveValue] resolvida pela largura do pai.
-  final Object direction;
+  final LayoutDirectionValue direction;
 
   /// Onde o motor fica dentro do pai. `null` deixa o pai decidir.
   final LayoutPosition? position;

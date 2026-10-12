@@ -6,6 +6,7 @@ import '../../theme_layer/theme_layer.dart';
 import '../inputs/form/form_controller.dart';
 import '../inputs/form/form_scope.dart';
 import '../inputs/form/validators.dart' show FormValues;
+import '../feedback/toast.dart';
 
 /// Variação visual do botão.
 enum ButtonVariant {
@@ -64,6 +65,7 @@ class Button extends StatefulWidget {
     this.expanded = false,
     this.icon,
     this.size = ButtonSize.standard,
+    this.backgroundColor,
   }) : assert(
          onPressed == null || onSubmit == null,
          'Use onPressed ou onSubmit, não os dois.',
@@ -83,6 +85,10 @@ class Button extends StatefulWidget {
   final IconData? icon;
   final ButtonSize size;
 
+  /// Cor de preenchimento para uma ação contextual. Quando informada, o
+  /// conteúdo usa `ThemeTokens.onBackgroundColor` por padrão.
+  final Color? backgroundColor;
+
   @override
   State<Button> createState() => _ButtonState();
 }
@@ -99,14 +105,21 @@ class _ButtonState extends State<Button> {
     if (_submitting) return;
     if (!form.validate()) return;
 
-    final Object? result = onSubmit(form.values);
-    if (result is Future) {
-      setState(() => _submitting = true);
-      try {
+    try {
+      final Object? result = onSubmit(form.values);
+      if (result is Future) {
+        setState(() => _submitting = true);
         await result;
-      } finally {
-        if (mounted) setState(() => _submitting = false);
       }
+    } catch (_) {
+      if (mounted) {
+        Toast.error(
+          context,
+          text: 'Não foi possível concluir a ação. Tente novamente.',
+        );
+      }
+    } finally {
+      if (mounted && _submitting) setState(() => _submitting = false);
     }
   }
 
@@ -151,8 +164,11 @@ class _ButtonState extends State<Button> {
         variant == ButtonVariant.pill ||
         variant == ButtonVariant.danger;
     final danger = variant == ButtonVariant.danger;
-    final mainColor = danger ? tokens.errorColor : tokens.primaryColor;
-    final foreground = filled ? tokens.onPrimaryColor : mainColor;
+    final customBackground = widget.backgroundColor;
+    final mainColor = customBackground ?? (danger ? tokens.errorColor : tokens.primaryColor);
+    final foreground = filled
+        ? (customBackground == null ? tokens.onPrimaryColor : tokens.onBackgroundColor)
+        : mainColor;
     final radius = variant == ButtonVariant.pill
         ? ButtonStyleSpec.pillRadius
         : spec.radius;
@@ -209,7 +225,7 @@ class _ButtonState extends State<Button> {
         onPressed: handler,
         style: ElevatedButton.styleFrom(
           backgroundColor: mainColor,
-          foregroundColor: tokens.onPrimaryColor,
+          foregroundColor: foreground,
           disabledBackgroundColor: tokens.borderColor,
           disabledForegroundColor: tokens.mutedTextColor,
           elevation: 0,

@@ -7,7 +7,7 @@ import 'form/validators.dart';
 import 'input_decoration_builder.dart';
 
 /// Natureza do dado digitado; define teclado e comportamento.
-enum InputType { text, email, password, number, phone, search }
+enum InputType { text, email, password, number, decimal, currency, phone, search }
 
 /// Campo de entrada: TextField + InputDecoration, pintado com os tokens e a
 /// aparência do `StylePack` ativo (outline, rounded, underline, filled).
@@ -44,7 +44,15 @@ class InputField extends StatefulWidget {
     this.enabled = true,
     this.autofocus = false,
     this.textInputAction,
-  });
+    this.minLines,
+    this.maxLines,
+    this.prefix,
+    this.suffix,
+  }) : assert(minLines == null || minLines > 0, 'minLines deve ser > 0.'),
+       assert(
+         maxLines == null || minLines == null || maxLines >= minLines,
+         'maxLines deve ser >= minLines.',
+       );
 
   final String? name;
   final String? hint;
@@ -59,6 +67,16 @@ class InputField extends StatefulWidget {
   final bool enabled;
   final bool autofocus;
   final TextInputAction? textInputAction;
+
+  /// Número mínimo/máximo de linhas. Ao informar [minLines], deixe
+  /// [maxLines] nulo para permitir que o campo cresça conforme o texto.
+  final int? minLines;
+  final int? maxLines;
+
+  /// Conteúdo exibido antes/depois do texto. Ícones automáticos de busca e
+  /// senha continuam sendo usados quando estes valores não são informados.
+  final Widget? prefix;
+  final Widget? suffix;
 
   @override
   State<InputField> createState() => _InputFieldState();
@@ -201,7 +219,9 @@ class _InputFieldState extends State<InputField>
       InputType.text => TextInputType.text,
       InputType.email => TextInputType.emailAddress,
       InputType.password => TextInputType.visiblePassword,
-      InputType.number => const TextInputType.numberWithOptions(decimal: true),
+      InputType.number => const TextInputType.numberWithOptions(),
+      InputType.decimal || InputType.currency =>
+        const TextInputType.numberWithOptions(decimal: true),
       InputType.phone => TextInputType.phone,
       InputType.search => TextInputType.text,
     };
@@ -219,12 +239,12 @@ class _InputFieldState extends State<InputField>
     final isPassword = type == InputType.password;
     final isFreeText = type == InputType.text || type == InputType.search;
 
-    Widget? prefix;
-    Widget? suffix;
-    if (type == InputType.search) {
+    Widget? prefix = widget.prefix;
+    Widget? suffix = widget.suffix;
+    if (prefix == null && type == InputType.search) {
       prefix = Icon(Icons.search, color: tokens.mutedTextColor);
     }
-    if (isPassword) {
+    if (suffix == null && isPassword) {
       suffix = IconButton(
         icon: Icon(
           _obscured ? Icons.visibility : Icons.visibility_off,
@@ -242,6 +262,8 @@ class _InputFieldState extends State<InputField>
       enabled: widget.enabled,
       autofocus: widget.autofocus,
       obscureText: isPassword && _obscured,
+      minLines: widget.minLines,
+      maxLines: widget.maxLines,
       keyboardType: _keyboardFor(type),
       textInputAction:
           widget.textInputAction ??

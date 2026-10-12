@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show Brightness;
 
 import 'app_theme.dart';
 
@@ -15,6 +16,7 @@ class AppThemeController extends ValueNotifier<AppThemeMode> {
   /// Adaptador prático para controles booleanos. Ativar seleciona escuro;
   /// desativar seleciona claro (não volta automaticamente a `system`).
   final ValueNotifier<bool> darkMode;
+  bool _syncingSystemBrightness = false;
 
   AppThemeMode get mode => value;
 
@@ -25,8 +27,21 @@ class AppThemeController extends ValueNotifier<AppThemeMode> {
     if (darkMode.value != nextDark) darkMode.value = nextDark;
   }
 
-  void _syncFromDarkMode() =>
-      mode = darkMode.value ? AppThemeMode.dark : AppThemeMode.light;
+  void _syncFromDarkMode() {
+    if (_syncingSystemBrightness) return;
+    mode = darkMode.value ? AppThemeMode.dark : AppThemeMode.light;
+  }
+
+  /// Mantém o adaptador booleano fiel ao tema efetivo enquanto [mode] segue
+  /// o sistema. Chamado por [EasyApp] depois que o `MediaQuery` existe.
+  void syncSystemBrightness(Brightness brightness) {
+    if (mode != AppThemeMode.system) return;
+    final isDark = brightness == Brightness.dark;
+    if (darkMode.value == isDark) return;
+    _syncingSystemBrightness = true;
+    darkMode.value = isDark;
+    _syncingSystemBrightness = false;
+  }
 
   void useSystem() => mode = AppThemeMode.system;
 

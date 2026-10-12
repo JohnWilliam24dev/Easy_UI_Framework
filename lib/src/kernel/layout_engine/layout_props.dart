@@ -27,11 +27,7 @@ class LayoutProps {
     this.fill = false,
     this.scrollable = false,
     this.stackBelow,
-  }) : assert(
-         direction is LayoutDirection ||
-             direction is ResponsiveValue<LayoutDirection>,
-       ),
-       assert(gap is! Fr, 'gap não pode ser Fr.'),
+  }) : assert(gap is! Fr, 'gap não pode ser Fr.'),
        assert(runGap is! Fr, 'runGap não pode ser Fr.'),
        assert(width is! Fr, 'width não pode ser Fr.'),
        assert(height is! Fr, 'height não pode ser Fr.'),
@@ -42,7 +38,7 @@ class LayoutProps {
        assert(stackBelow == null || stackBelow > 0, 'stackBelow deve ser > 0.');
 
   /// [LayoutDirection] fixa ou valor responsivo por largura do pai.
-  final Object direction;
+  final LayoutDirectionValue direction;
   final LayoutPosition? position;
   final Alignment align;
   final Dimension? gap;

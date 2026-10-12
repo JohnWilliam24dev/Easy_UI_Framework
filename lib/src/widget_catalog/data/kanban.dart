@@ -172,9 +172,10 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
       final visible = column.items
           .where((item) => widget.itemId(item) != _dragId)
           .length;
+      final cardGap = StylePackScope.of(context).kanban.cardGap;
       final raw = listRect == null
           ? visible
-          : ((pointer.dy - listRect.top + offset) / (widget.cardHeight + 8))
+          : ((pointer.dy - listRect.top + offset) / (widget.cardHeight + cardGap))
                 .floor();
       final index = raw.clamp(0, visible);
       if (_hoverColumn != column.id || _hoverIndex != index)
@@ -416,13 +417,13 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
       widgets.add(
         LongPressDraggable<String>(
           data: id,
-          delay: const Duration(milliseconds: 200),
+          delay: pack.kanban.dragDelay,
           onDragStarted: () => _start(item, column.id),
           onDragUpdate: (details) => _update(details.globalPosition),
           onDragEnd: (_) => _end(),
           childWhenDragging: const SizedBox.shrink(),
           feedback: Material(
-            color: Colors.transparent,
+            color: const Color(0x00000000),
             child: AppThemeScope(
               theme: theme,
               child: StylePackScope(
@@ -436,7 +437,7 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.only(bottom: pack.kanban.cardGap),
             child: SizedBox(
               height: widget.cardHeight,
               child: GestureDetector(
@@ -467,7 +468,7 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
   }
 
   Widget _placeholder() => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
+    padding: EdgeInsets.only(bottom: StylePackScope.of(context).kanban.cardGap),
     child: SizedBox(
       height: widget.cardHeight,
       child: DecoratedBox(

@@ -53,6 +53,16 @@ void main() {
       );
     });
 
+    testWidgets('decimal e currency usam teclado numérico decimal',
+        (tester) async {
+      const decimal = TextInputType.numberWithOptions(decimal: true);
+      await pumpEasy(tester, _tela(const InputField(type: InputType.decimal)));
+      expect(_textField(tester).keyboardType, decimal);
+
+      await pumpEasy(tester, _tela(const InputField(type: InputType.currency)));
+      expect(_textField(tester).keyboardType, decimal);
+    });
+
     testWidgets('search mostra a lupa', (tester) async {
       await pumpEasy(tester, _tela(const InputField(type: InputType.search)));
       expect(find.byIcon(Icons.search), findsOneWidget);
@@ -81,6 +91,24 @@ void main() {
   });
 
   group('interação', () {
+    testWidgets('expõe prefix, suffix e múltiplas linhas', (tester) async {
+      await pumpEasy(
+        tester,
+        _tela(
+          const InputField(
+            minLines: 2,
+            maxLines: 4,
+            prefix: Text('R\$'),
+            suffix: Icon(Icons.attach_money),
+          ),
+        ),
+      );
+      final field = _textField(tester);
+      expect(field.minLines, 2);
+      expect(field.maxLines, 4);
+      expect(find.text('R\$'), findsOneWidget);
+      expect(find.byIcon(Icons.attach_money), findsOneWidget);
+    });
     testWidgets('onChanged recebe o que foi digitado', (tester) async {
       String? digitado;
       await pumpEasy(

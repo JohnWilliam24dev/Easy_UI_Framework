@@ -52,7 +52,7 @@ class FormGroup extends StatefulWidget {
        assert(height is! Fr, 'height não pode ser Fr.');
 
   final List<Widget> children;
-  final Object direction;
+  final LayoutDirectionValue direction;
   final LayoutPosition? position;
   final Alignment align;
   final Dimension? gap;

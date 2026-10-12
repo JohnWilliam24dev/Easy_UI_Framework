@@ -179,6 +179,7 @@ abstract final class Modal {
     BuildContext context, {
     required String title,
     required List<ModalChoice<T>> choices,
+    T? selected,
   }) => showDialog<T>(
     context: context,
     builder: (dialogContext) => _ModalShell(
@@ -191,6 +192,7 @@ abstract final class Modal {
             ListItem(
               title: choice.label,
               subtitle: choice.description,
+              selected: choice.value == selected,
               onTap: () => Navigator.of(dialogContext).pop(choice.value),
             ),
         ],
@@ -206,7 +208,12 @@ abstract final class Modal {
   }) => showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
-    builder: builder,
+    builder: (sheetContext) => AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
+      child: SafeArea(top: false, child: builder(sheetContext)),
+    ),
   );
 
   /// Escolhe o formato com a largura do pai; a consulta de layout fica no
@@ -216,32 +223,10 @@ abstract final class Modal {
     required WidgetBuilder builder,
     double sheetBelow = 600,
   }) {
-    final completer = Completer<T?>();
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => Responsive(
-        breakAt: Breakpoints(tabletMin: sheetBelow, desktopMin: sheetBelow + 1),
-        mobile: Builder(
-          builder: (_) {
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              Navigator.of(dialogContext).pop();
-              completer.complete(await sheet<T>(context, builder: builder));
-            });
-            return const SizedBox.shrink();
-          },
-        ),
-        tablet: Builder(
-          builder: (_) {
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              Navigator.of(dialogContext).pop();
-              completer.complete(await custom<T>(context, builder: builder));
-            });
-            return const SizedBox.shrink();
-          },
-        ),
-      ),
-    );
-    return completer.future;
+    final width = MediaQuery.sizeOf(context).width;
+    return width < sheetBelow
+        ? sheet<T>(context, builder: builder)
+        : custom<T>(context, builder: builder);
   }
 }
 

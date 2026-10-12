@@ -38,7 +38,9 @@ class Grid extends StatelessWidget {
     this.cellHeight,
   }) : assert(minCell > 0, 'minCell deve ser > 0.'),
        assert(maxCell >= minCell, 'maxCell deve ser >= minCell.'),
-       assert(cellRatio > 0, 'cellRatio deve ser > 0.');
+       assert(cellRatio > 0, 'cellRatio deve ser > 0.'),
+       _itemCount = null,
+       _itemBuilder = null;
 
   final List<Widget> children;
   final int minCell;
@@ -63,6 +65,8 @@ class Grid extends StatelessWidget {
        maxCell = 1,
        cellRatio = 1,
        breakpoints = null,
+       _itemCount = null,
+       _itemBuilder = null,
        assert(
          minCellWidth == null || minCellWidth > 0,
          'minCellWidth deve ser > 0.',
@@ -70,6 +74,35 @@ class Grid extends StatelessWidget {
 
   final double? minCellWidth;
   final double? cellHeight;
+
+  /// Versão preguiçosa do Grid: cria somente os itens visíveis.
+  const Grid.builder({
+    super.key,
+    required int itemCount,
+    required NullableIndexedWidgetBuilder itemBuilder,
+    required this.minCell,
+    required this.maxCell,
+    this.cellRatio = 1,
+    this.gap,
+    this.scrollable = false,
+    this.breakpoints,
+  }) : children = const <Widget>[],
+       _itemCount = itemCount,
+       _itemBuilder = itemBuilder,
+       minCellWidth = null,
+       cellHeight = null,
+       assert(itemCount >= 0, 'itemCount deve ser >= 0.'),
+       assert(minCell > 0, 'minCell deve ser > 0.'),
+       assert(maxCell >= minCell, 'maxCell deve ser >= minCell.'),
+       assert(cellRatio > 0, 'cellRatio deve ser > 0.');
+
+  final int? _itemCount;
+  final NullableIndexedWidgetBuilder? _itemBuilder;
+  int get _resolvedItemCount => _itemCount ?? children.length;
+  Widget _buildItem(BuildContext context, int index) =>
+      _itemBuilder == null
+          ? children[index]
+          : _itemBuilder!(context, index)!;
 
   @override
   Widget build(BuildContext context) {
@@ -107,8 +140,8 @@ class Grid extends StatelessWidget {
                     mainAxisSpacing: gapPx,
                     crossAxisSpacing: gapPx,
                   ),
-            itemCount: children.length,
-            itemBuilder: (context, index) => children[index],
+            itemCount: _resolvedItemCount,
+            itemBuilder: _buildItem,
           );
         }
         final columns = resolver.interpolateInt(
@@ -127,8 +160,8 @@ class Grid extends StatelessWidget {
             mainAxisSpacing: gapPx,
             crossAxisSpacing: gapPx,
           ),
-          itemCount: children.length,
-          itemBuilder: (context, index) => children[index],
+          itemCount: _resolvedItemCount,
+          itemBuilder: _buildItem,
         );
       },
     );

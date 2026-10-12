@@ -287,6 +287,10 @@ final erp = StylePack.define(
   label: LabelStyleSpec.compact(),
   spacingScale: 0.8,          // mais denso
 );
+
+// Presets prontos para os dois contextos mais comuns:
+final glass = StylePack.glass;
+final operational = StylePack.operational;
 ```
 
 | Parâmetro | Tipo | Padrão |
@@ -546,7 +550,9 @@ Regras:
 |---|---|---|---|
 | `name` | `String?` | `null` | Identifica o campo no `FormGroup`. Obrigatório se tiver `validation` dentro de um grupo. |
 | `hint` | `String?` | `null` | Texto de dica. |
-| `type` | `InputType` | `text` | `text`, `email`, `password`, `number`, `phone`, `search`. |
+| `type` | `InputType` | `text` | `text`, `email`, `password`, `number`, `decimal`, `currency`, `phone`, `search`. |
+| `minLines` / `maxLines` | `int?` | `null` | Linhas mínimas e máximas para texto longo. |
+| `prefix` / `suffix` | `Widget?` | `null` | Conteúdo antes/depois do texto, como símbolo de moeda. |
 | `validation` | `List<Validator>` | `[]` | Regras, avaliadas em ordem; a primeira que falhar mostra a mensagem. |
 | `controller` | `TextEditingController?` | `null` | Controller externo (opcional; o campo cria um interno). |
 | `onChanged` | `ValueChanged<String>?` | `null` | A cada alteração. |
@@ -556,7 +562,7 @@ Regras:
 | `autofocus` | `bool` | `false` | Foco ao abrir. |
 | `textInputAction` | `TextInputAction?` | `null` (`search` → `search`) | Ação do teclado. |
 
-Comportamento por `type`: `password` esconde o texto e ganha o botão de mostrar/ocultar; `search` ganha o ícone de lupa; `email`/`number`/`phone` usam o teclado correspondente; `email`, `number`, `phone` e `password` desligam autocorreção e sugestões.
+Comportamento por `type`: `password` esconde o texto e ganha o botão de mostrar/ocultar; `search` ganha o ícone de lupa; `decimal` e `currency` usam teclado numérico decimal; `email`, `number`, `phone` e `password` desligam autocorreção e sugestões.
 
 A aparência (outline, rounded, underline, filled, sombra, padding) vem do `InputStyleSpec` do pack ativo.
 

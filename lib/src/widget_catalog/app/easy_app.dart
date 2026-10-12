@@ -49,11 +49,12 @@ class EasyApp extends StatelessWidget {
     if (controller == null) return _buildApp(theme);
     return ValueListenableBuilder<AppThemeMode>(
       valueListenable: controller,
-      builder: (context, mode, _) => _buildApp(theme.copyWith(mode: mode)),
+      builder: (context, mode, _) =>
+          _buildApp(theme.copyWith(mode: mode), controller),
     );
   }
 
-  Widget _buildApp(AppTheme activeTheme) {
+  Widget _buildApp(AppTheme activeTheme, [AppThemeController? controller]) {
     return MaterialApp(
       title: title,
       debugShowCheckedModeBanner: debugShowCheckedModeBanner,
@@ -66,6 +67,7 @@ class EasyApp extends StatelessWidget {
       navigatorObservers: navigatorObservers,
       // Dentro do builder já existe MediaQuery, necessário para o modo system.
       builder: (context, child) {
+        controller?.syncSystemBrightness(MediaQuery.platformBrightnessOf(context));
         return AppThemeScope(
           theme: activeTheme,
           child: StylePackScope(

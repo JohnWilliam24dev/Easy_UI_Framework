@@ -37,6 +37,25 @@ class StylePack {
   /// Pack usado quando não há nenhum `StylePackScope` acima na árvore.
   static const StylePack standard = StylePack(name: 'standard');
 
+  /// Superfícies translúcidas, inputs arredondados e espaçamento arejado.
+  static const StylePack glass = StylePack(
+    name: 'glass',
+    inputText: InputStyleSpec.rounded(radius: 16),
+    button: ButtonStyleSpec.pill(),
+    card: CardStyleSpec.glass(),
+    spacingScale: 1.15,
+  );
+
+  /// Aparência compacta para fluxos internos, tabelas e operações densas.
+  static const StylePack operational = StylePack(
+    name: 'operational',
+    inputText: InputStyleSpec.underline(),
+    button: ButtonStyleSpec.compact(),
+    card: CardStyleSpec.flat(),
+    label: LabelStyleSpec.compact(),
+    spacingScale: 0.8,
+  );
+
   static final Map<String, StylePack> _registry = <String, StylePack>{};
 
   /// Cria e registra um pack pelo [name]. Definir o mesmo nome de novo
@@ -82,6 +101,8 @@ class StylePack {
     final pack = _registry[name];
     if (pack != null) return pack;
     if (name == standard.name) return standard;
+    if (name == glass.name) return glass;
+    if (name == operational.name) return operational;
     throw ArgumentError.value(
       name,
       'name',
@@ -92,6 +113,8 @@ class StylePack {
   /// Nomes dos packs disponíveis.
   static List<String> get definedNames => <String>[
     standard.name,
+    glass.name,
+    operational.name,
     ..._registry.keys,
   ];
 
