@@ -93,5 +93,28 @@ void main() {
       expect(tokens, testDarkTokens);
       expect(primaryDoMaterial, testDarkTokens.primaryColor);
     });
+
+    testWidgets('darkMode acompanha o sistema sem sair do modo system',
+        (tester) async {
+      tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+      addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+      final controller = AppThemeController();
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        EasyApp(
+          theme: const AppTheme(light: testTokens, dark: testDarkTokens),
+          themeController: controller,
+          home: const SizedBox(),
+        ),
+      );
+      await tester.pump();
+
+      expect(controller.mode, AppThemeMode.system);
+      expect(controller.darkMode.value, isTrue);
+
+      controller.darkMode.value = false;
+      expect(controller.mode, AppThemeMode.light);
+    });
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../kernel/kernel.dart' show platformBrightnessOf;
 import '../../theme_layer/theme_layer.dart';
 import 'material_bridge.dart';
 
@@ -67,7 +68,12 @@ class EasyApp extends StatelessWidget {
       navigatorObservers: navigatorObservers,
       // Dentro do builder já existe MediaQuery, necessário para o modo system.
       builder: (context, child) {
-        controller?.syncSystemBrightness(MediaQuery.platformBrightnessOf(context));
+        if (controller != null) {
+          final platformBrightness = platformBrightnessOf(context);
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => controller.syncSystemBrightness(platformBrightness),
+          );
+        }
         return AppThemeScope(
           theme: activeTheme,
           child: StylePackScope(
