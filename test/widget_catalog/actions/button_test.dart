@@ -165,4 +165,22 @@ void main() {
       );
     });
   });
+
+  group('backgroundColor', () {
+    testWidgets('preenche com a cor informada e usa onBackground no conteúdo',
+        (tester) async {
+      const cor = Color(0xFFFF5722);
+      await pumpEasy(
+        tester,
+        _tela(Button(text: 'Nova coluna', backgroundColor: cor, onPressed: () {})),
+      );
+      final style = tester.widget<ElevatedButton>(find.byType(ElevatedButton)).style!;
+
+      expect(style.backgroundColor!.resolve(<WidgetState>{}), cor);
+      expect(
+        style.foregroundColor!.resolve(<WidgetState>{}),
+        testTokens.onBackgroundColor,
+      );
+    });
+  });
 }

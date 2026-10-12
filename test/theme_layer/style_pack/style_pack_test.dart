@@ -90,4 +90,32 @@ void main() {
       isNot(const StylePack(name: 'a', spacingScale: 2)),
     );
   });
+
+  group('presets', () {
+    test('glass tem superfície translúcida e botão pill', () {
+      final pack = StylePack.glass;
+      expect(pack.name, 'glass');
+      expect(pack.card.variant, CardVariant.glass);
+      expect(pack.button.minHeight, 48);
+      expect(pack.spacingScale, 1.15);
+    });
+
+    test('operational é denso e plano', () {
+      final pack = StylePack.operational;
+      expect(pack.name, 'operational');
+      expect(pack.card.variant, CardVariant.outlined);
+      expect(pack.button.minHeight, 32);
+      expect(pack.label.titleScale, 1.4);
+      expect(pack.spacingScale, 0.8);
+    });
+
+    test('byName e definedNames encontram os presets', () {
+      expect(StylePack.byName('glass'), same(StylePack.glass));
+      expect(StylePack.byName('operational'), same(StylePack.operational));
+      expect(
+        StylePack.definedNames,
+        containsAll(<String>['standard', 'glass', 'operational']),
+      );
+    });
+  });
 }
