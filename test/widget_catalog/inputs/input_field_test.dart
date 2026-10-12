@@ -293,4 +293,71 @@ void main() {
       expect(find.text('Mínimo de 4'), findsOneWidget);
     });
   });
+
+  group('linhas e tipos numéricos', () {
+    testWidgets('por padrão o campo tem uma linha só', (tester) async {
+      await pumpEasy(tester, _tela(const InputField()));
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.maxLines, 1);
+      expect(field.minLines, isNull);
+    });
+
+    testWidgets('minLines sem maxLines cresce com o texto', (tester) async {
+      await pumpEasy(tester, _tela(const InputField(minLines: 3)));
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.minLines, 3);
+      expect(field.maxLines, isNull);
+      expect(field.keyboardType, TextInputType.multiline);
+    });
+
+    testWidgets('password ignora minLines e maxLines', (tester) async {
+      await pumpEasy(
+        tester,
+        _tela(
+          const InputField(type: InputType.password, minLines: 3, maxLines: 5),
+        ),
+      );
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.maxLines, 1);
+      expect(field.minLines, isNull);
+    });
+
+    testWidgets('number aceita só dígitos', (tester) async {
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+      await pumpEasy(
+        tester,
+        _tela(InputField(type: InputType.number, controller: controller)),
+      );
+      await tester.enterText(find.byType(TextField), 'a12,5b');
+      expect(controller.text, '125');
+    });
+
+    testWidgets('currency e decimal aceitam dígitos e separador',
+        (tester) async {
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+      await pumpEasy(
+        tester,
+        _tela(InputField(type: InputType.currency, controller: controller)),
+      );
+      await tester.enterText(find.byType(TextField), 'R\$ 1.234,56x');
+      expect(controller.text, '1.234,56');
+    });
+
+    testWidgets('prefix e suffix aparecem no campo', (tester) async {
+      await pumpEasy(
+        tester,
+        _tela(
+          const InputField(
+            type: InputType.currency,
+            prefix: Text('R\$'),
+            suffix: Text('BRL'),
+          ),
+        ),
+      );
+      expect(find.text('R\$'), findsOneWidget);
+      expect(find.text('BRL'), findsOneWidget);
+    });
+  });
 }

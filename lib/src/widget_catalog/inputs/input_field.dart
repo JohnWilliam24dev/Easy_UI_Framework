@@ -23,6 +23,12 @@ enum InputType { text, email, password, number, decimal, currency, phone, search
 /// - [errorText], se informado, tem prioridade sobre a validação (útil para
 ///   erros vindos do servidor).
 ///
+/// - `number` aceita só dígitos; `decimal` e `currency` aceitam dígitos e
+///   separador (`,` ou `.`), e `currency` não desenha símbolo: use [prefix]
+///   (`Label(text: 'R\$')`) e `formatMoney`/`parseDecimal` para exibir e ler;
+/// - [minLines]/[maxLines] criam um campo de texto longo; sem eles o campo
+///   tem uma linha só.
+///
 /// Máscara entra em uma próxima etapa.
 ///
 /// ```dart
@@ -227,6 +233,16 @@ class _InputFieldState extends State<InputField>
     };
   }
 
+  static List<TextInputFormatter>? _formattersFor(InputType type) {
+    return switch (type) {
+      InputType.number => [FilteringTextInputFormatter.digitsOnly],
+      InputType.decimal || InputType.currency => [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+      ],
+      _ => null,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = AppThemeScope.tokensOf(context);
@@ -238,6 +254,8 @@ class _InputFieldState extends State<InputField>
 
     final isPassword = type == InputType.password;
     final isFreeText = type == InputType.text || type == InputType.search;
+    final maxLines = widget.maxLines ?? (widget.minLines == null ? 1 : null);
+    final multiline = !isPassword && maxLines != 1;
 
     Widget? prefix = widget.prefix;
     Widget? suffix = widget.suffix;
@@ -262,9 +280,10 @@ class _InputFieldState extends State<InputField>
       enabled: widget.enabled,
       autofocus: widget.autofocus,
       obscureText: isPassword && _obscured,
-      minLines: widget.minLines,
-      maxLines: widget.maxLines,
-      keyboardType: _keyboardFor(type),
+      minLines: isPassword ? null : widget.minLines,
+      maxLines: isPassword ? 1 : maxLines,
+      keyboardType: multiline ? TextInputType.multiline : _keyboardFor(type),
+      inputFormatters: _formattersFor(type),
       textInputAction:
           widget.textInputAction ??
           (type == InputType.search ? TextInputAction.search : null),
