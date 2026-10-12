@@ -1,5 +1,7 @@
 import 'package:easy_ui/src/widget_catalog/actions/button.dart';
 import 'package:easy_ui/src/widget_catalog/feedback/modal.dart';
+import 'package:easy_ui/src/widget_catalog/inputs/input_field.dart';
+import 'package:easy_ui/src/widget_catalog/inputs/form/validators.dart';
 import 'package:easy_ui/src/widget_catalog/layout/tela.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +9,37 @@ import 'package:flutter_test/flutter_test.dart';
 import '../support/pump_easy.dart';
 
 void main() {
+  testWidgets('form valida campos antes de enviar', (tester) async {
+    var calls = 0;
+    await pumpEasy(
+      tester,
+      Tela(
+        child: Builder(
+          builder: (context) => Button(
+            text: 'Abrir',
+            onPressed: () => Modal.form<void>(
+              context,
+              title: 'Editar',
+              fields: (_) => [
+                InputField(name: 'name', validation: [isRequired()]),
+              ],
+              onSubmit: (_) => calls++,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Abrir'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+    await tester.pump();
+    expect(calls, 0);
+    expect(find.text('Campo obrigatório'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Ana');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+    await tester.pumpAndSettle();
+    expect(calls, 1);
+  });
   group('confirm', () {
     testWidgets('confirmar devolve true e fecha o diálogo', (tester) async {
       bool? resultado;

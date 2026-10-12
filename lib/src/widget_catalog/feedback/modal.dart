@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart'
     show Colors, Dialog, showDialog, showModalBottomSheet;
 import 'package:flutter/widgets.dart';
@@ -6,7 +8,11 @@ import '../../kernel/kernel.dart';
 import '../actions/button.dart';
 import '../display/card.dart';
 import '../display/label.dart';
+import '../display/list_item.dart';
 import '../layout/div.dart';
+import '../inputs/form/form_group.dart';
+import '../inputs/form/validators.dart';
+import '../inputs/input_field.dart';
 
 /// Caixa de diálogo modal: `showDialog` + `AlertDialog`, pintada com os
 /// tokens e a aparência do `StylePack` ativo (via `Card`/`Button`
@@ -103,28 +109,92 @@ abstract final class Modal {
     );
   }
 
-  /// Modal de edição com ações de cancelar e salvar. O conteúdo pode ser um
-  /// [FormGroup] cujo botão de envio use `onSubmit` normalmente.
+  /// Modal de edição que cria o [FormGroup] e mantém as ações no mesmo
+  /// escopo dos campos, portanto o botão Salvar sempre valida antes do envio.
   static Future<T?> form<T>(
     BuildContext context, {
     required String title,
-    required WidgetBuilder builder,
+    required List<Widget> Function(BuildContext context) fields,
+    required FutureOr<T?> Function(FormValues values) onSubmit,
+    Map<String, Object?> initialValues = const <String, Object?>{},
     String cancelText = 'Cancelar',
     String saveText = 'Salvar',
-    VoidCallback? onSave,
   }) => showDialog<T>(
     context: context,
     builder: (dialogContext) => _ModalShell(
       title: title,
-      actions: [
-        Button(
-          text: cancelText,
-          variant: ButtonVariant.ghost,
-          onPressed: () => Navigator.of(dialogContext).pop(),
-        ),
-        Button(text: saveText, onPressed: onSave),
-      ],
-      content: builder(dialogContext),
+      content: FormGroup(
+        initialValues: initialValues,
+        onSubmit: (values) async {
+          final result = await onSubmit(values);
+          if (dialogContext.mounted) Navigator.of(dialogContext).pop(result);
+        },
+        children: [
+          ...fields(dialogContext),
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 8,
+            children: [
+              Button(
+                text: cancelText,
+                variant: ButtonVariant.ghost,
+                onPressed: () => Navigator.of(dialogContext).pop(),
+              ),
+              Button(text: saveText),
+            ],
+          ),
+        ],
+      ),
+      actions: const [],
+    ),
+  );
+
+  /// Pede um texto usando o mesmo fluxo validado de [form].
+  static Future<String?> prompt(
+    BuildContext context, {
+    required String title,
+    String? label,
+    String? hint,
+    String? initialValue,
+    List<Validator> validation = const <Validator>[],
+    String confirmText = 'Confirmar',
+  }) => form<String>(
+    context,
+    title: title,
+    saveText: confirmText,
+    initialValues: {'value': initialValue},
+    fields: (_) => [
+      InputField(
+        name: 'value',
+        label: label,
+        hint: hint,
+        validation: validation,
+      ),
+    ],
+    onSubmit: (values) => values.string('value'),
+  );
+
+  /// Escolhe um item sem expor `SimpleDialog` ao aplicativo.
+  static Future<T?> choice<T>(
+    BuildContext context, {
+    required String title,
+    required List<ModalChoice<T>> choices,
+  }) => showDialog<T>(
+    context: context,
+    builder: (dialogContext) => _ModalShell(
+      title: title,
+      actions: const [],
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final choice in choices)
+            ListItem(
+              title: choice.label,
+              subtitle: choice.description,
+              onTap: () => Navigator.of(dialogContext).pop(choice.value),
+            ),
+        ],
+      ),
     ),
   );
 
@@ -139,17 +209,47 @@ abstract final class Modal {
     builder: builder,
   );
 
-  /// Usa bottom sheet em larguras compactas e diálogo nas demais.
+  /// Escolhe o formato com a largura do pai; a consulta de layout fica no
+  /// Kernel, por meio de [Responsive].
   static Future<T?> adaptive<T>(
     BuildContext context, {
     required WidgetBuilder builder,
     double sheetBelow = 600,
   }) {
-    if (MediaQuery.sizeOf(context).width < sheetBelow) {
-      return sheet(context, builder: builder);
-    }
-    return custom<T>(context, builder: builder);
+    final completer = Completer<T?>();
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Responsive(
+        breakAt: Breakpoints(tabletMin: sheetBelow, desktopMin: sheetBelow + 1),
+        mobile: Builder(
+          builder: (_) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              Navigator.of(dialogContext).pop();
+              completer.complete(await sheet<T>(context, builder: builder));
+            });
+            return const SizedBox.shrink();
+          },
+        ),
+        tablet: Builder(
+          builder: (_) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              Navigator.of(dialogContext).pop();
+              completer.complete(await custom<T>(context, builder: builder));
+            });
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+    return completer.future;
   }
+}
+
+class ModalChoice<T> {
+  const ModalChoice(this.value, this.label, {this.description});
+  final T value;
+  final String label;
+  final String? description;
 }
 
 class _ModalShell extends StatelessWidget {

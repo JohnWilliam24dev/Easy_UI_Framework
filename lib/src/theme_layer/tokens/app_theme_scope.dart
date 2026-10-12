@@ -20,6 +20,10 @@ class AppThemeScope extends StatelessWidget {
     return _inheritedOf(context).tokens;
   }
 
+  /// Tema do escopo mais próximo, útil para repropagar a aparência em
+  /// overlays criados fora da subárvore original (como feedbacks de drag).
+  static AppTheme themeOf(BuildContext context) => _inheritedOf(context).theme;
+
   /// Brilho efetivo (já considerando o modo do tema) neste ponto da árvore.
   static Brightness brightnessOf(BuildContext context) {
     return _inheritedOf(context).brightness;
@@ -46,6 +50,7 @@ class AppThemeScope extends StatelessWidget {
         : Brightness.light;
     final brightness = theme.resolveBrightness(platform);
     return _AppThemeInherited(
+      theme: theme,
       tokens: theme.tokensFor(brightness),
       brightness: brightness,
       child: child,
@@ -55,16 +60,20 @@ class AppThemeScope extends StatelessWidget {
 
 class _AppThemeInherited extends InheritedWidget {
   const _AppThemeInherited({
+    required this.theme,
     required this.tokens,
     required this.brightness,
     required super.child,
   });
 
+  final AppTheme theme;
   final ThemeTokens tokens;
   final Brightness brightness;
 
   @override
   bool updateShouldNotify(_AppThemeInherited oldWidget) {
-    return tokens != oldWidget.tokens || brightness != oldWidget.brightness;
+    return theme != oldWidget.theme ||
+        tokens != oldWidget.tokens ||
+        brightness != oldWidget.brightness;
   }
 }

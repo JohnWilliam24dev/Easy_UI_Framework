@@ -107,7 +107,8 @@ export 'src/widget_catalog/app/app_shell.dart' show AppShell, NavDestination;
 export 'src/widget_catalog/auth/auth_page.dart' show AuthPage;
 export 'src/widget_catalog/data/resource_list.dart' show Field, ResourceList;
 export 'src/widget_catalog/data/kanban.dart'
-    show KanbanBoard, KanbanColumnData, KanbanMove;
+    show KanbanBoard, KanbanColumnData, KanbanMove, KanbanColumnMove;
+export 'src/widget_catalog/feedback/modal.dart' show ModalChoice;
 
 export 'package:flutter/material.dart' show Icons;
 
