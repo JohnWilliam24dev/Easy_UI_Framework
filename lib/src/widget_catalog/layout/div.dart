@@ -51,7 +51,7 @@ class Div extends StatelessWidget {
 
   final List<Widget> children;
 
-  /// Direção fixa ou [ResponsiveValue] para a largura disponível do pai.
+  /// Direção fixa ou [ResponsiveDirection] para a largura disponível do pai.
   final LayoutDirectionValue direction;
   final LayoutPosition? position;
   final Alignment align;

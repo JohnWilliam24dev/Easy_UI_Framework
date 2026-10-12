@@ -1,15 +1,14 @@
 import 'package:flutter/widgets.dart';
 
-import '../responsive/responsive_value.dart';
 import '../unit_system/dimension.dart';
-import 'layout_engine.dart' show LayoutDirection;
+import 'layout_engine.dart' show LayoutDirection, LayoutDirectionValue;
 import 'layout_position.dart';
 
 /// Propriedades de composição compartilhadas por widgets que usam layout.
 ///
 /// Mantém os widgets do catálogo consistentes sem fazer o Kernel depender de
 /// tema ou de widgets de negócio. [direction] também aceita um
-/// [ResponsiveValue] para trocar a direção pela largura disponível do pai.
+/// [ResponsiveDirection] para trocar a direção pela largura disponível do pai.
 @immutable
 class LayoutProps {
   const LayoutProps({

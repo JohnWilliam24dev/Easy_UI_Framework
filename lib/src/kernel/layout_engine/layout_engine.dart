@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
+import '../responsive/breakpoints.dart' show ScreenSize;
 import '../responsive/responsive_resolver.dart';
 import '../responsive/responsive_value.dart';
 import '../unit_system/unit_system.dart';
@@ -9,7 +10,7 @@ import 'alignment_mapper.dart';
 import 'layout_position.dart';
 
 /// Como o [LayoutEngine] organiza os filhos.
-enum LayoutDirection {
+enum LayoutDirection implements LayoutDirectionValue {
   /// Um abaixo do outro (Column).
   vertical,
 
@@ -23,8 +24,30 @@ enum LayoutDirection {
   wrap,
 }
 
-/// Direção fixa ou adaptada à largura disponível do pai.
-typedef LayoutDirectionValue = LayoutDirection | ResponsiveValue<LayoutDirection>;
+/// Direção fixa ([LayoutDirection]) ou adaptada à largura do pai
+/// ([ResponsiveDirection]). Tipo selado: o compilador recusa qualquer outro.
+sealed class LayoutDirectionValue {}
+
+/// Direção que muda conforme o [ScreenSize] da largura disponível do pai.
+/// Tablet cai para mobile e desktop cai para tablet quando não declarados.
+///
+/// ```dart
+/// Div(direction: ResponsiveDirection(mobile: LayoutDirection.vertical, desktop: LayoutDirection.horizontal))
+/// ```
+@immutable
+final class ResponsiveDirection implements LayoutDirectionValue {
+  const ResponsiveDirection({required this.mobile, this.tablet, this.desktop});
+
+  final LayoutDirection mobile;
+  final LayoutDirection? tablet;
+  final LayoutDirection? desktop;
+
+  LayoutDirection resolve(ScreenSize size) => ResponsiveValue<LayoutDirection>(
+    mobile: mobile,
+    tablet: tablet,
+    desktop: desktop,
+  ).resolve(size);
+}
 
 /// Declara o tamanho de um filho no eixo principal do [LayoutEngine].
 ///
@@ -89,7 +112,7 @@ class LayoutEngine extends StatelessWidget {
 
   final List<Widget> children;
 
-  /// Direção fixa ou uma [ResponsiveValue] resolvida pela largura do pai.
+  /// Direção fixa ou uma [ResponsiveDirection] resolvida pela largura do pai.
   final LayoutDirectionValue direction;
 
   /// Onde o motor fica dentro do pai. `null` deixa o pai decidir.
@@ -203,11 +226,12 @@ class LayoutEngine extends StatelessWidget {
           ? LayoutDirection.vertical
           : LayoutDirection.horizontal;
     }
-    final value = direction;
-    if (value is ResponsiveValue<LayoutDirection>) {
-      return ResponsiveResolver().pick(parentWidth, value);
-    }
-    return value as LayoutDirection;
+    return switch (direction) {
+      final LayoutDirection fixed => fixed,
+      final ResponsiveDirection responsive => responsive.resolve(
+        const ResponsiveResolver().sizeFor(parentWidth),
+      ),
+    };
   }
 
   Widget _buildContent(

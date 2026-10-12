@@ -38,7 +38,13 @@ export 'src/theme_layer/theme_layer.dart'
         ThemeTokens;
 export 'src/theme_layer/tokens/theme_tokens.dart' show tint;
 export 'src/kernel/layout_engine/layout.dart'
-    show LayoutDirection, LayoutItem, LayoutPosition, LayoutProps;
+    show
+        LayoutDirection,
+        LayoutDirectionValue,
+        LayoutItem,
+        LayoutPosition,
+        LayoutProps,
+        ResponsiveDirection;
 export 'src/kernel/scroll/scroll.dart' show EdgeAutoScroller;
 export 'src/formatting/formatting.dart'
     show formatDate, formatDateTime, formatMoney, formatPercent, parseDecimal;
