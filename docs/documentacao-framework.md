@@ -313,6 +313,12 @@ pubspec.yaml                       → versionamento semver desde o início
 | 29 | `Toast.show(context, ...)` é estático (dispara um `SnackBar` via `ScaffoldMessenger`), não um widget na árvore; um novo toast substitui o anterior (`hideCurrentSnackBar`) | Toast é um efeito colateral pontual, não estado de UI — não faz sentido compor como filho de outro widget |
 | 30 | `Modal` tem três métodos estáticos (`confirm`, `alert`, `custom`) em vez de um widget com `type: confirm\|alert\|custom` | `confirm` devolve `bool?`, `alert` devolve `void`, `custom<T>` devolve `T?` — tipos de retorno diferentes não cabem numa única prop `type` sem `dynamic` |
 | 31 | `Loader(mode: overlay)` exige ser filho direto de um `Stack` (usa `Positioned.fill` + `AbsorbPointer`); o véu usa a própria `backgroundColor` do tema com alpha, não uma cor fixa | Bloqueia toda a tela sem precisar saber se o tema ativo é claro ou escuro |
+| 32 | `direction` de `Div`, `FormGroup` e `LayoutProps` é `LayoutDirectionValue` (tipo selado): `LayoutDirection` ou `ResponsiveDirection` | Dart não tem tipo união e `Object` aceitava qualquer valor até o runtime; o tipo selado devolve a checagem ao compilador. `ResponsiveDirection` troca a direção pela largura do pai, no mesmo molde de `ResponsiveValue` |
+| 33 | Catálogo não lê `MediaQuery`: `Modal.adaptive` usa `ResponsiveResolver`, `Modal.sheet` e o sync de brilho usam helpers do Kernel (`viewInsetsOf`, `platformBrightnessOf`) | Mantém a regra de dependência da Camada 1; só o Kernel mede a tela |
+| 34 | Falha em `Button(onSubmit:)` e em `optimistic` mostra `Toast.error` e reporta a exceção com `FlutterError.reportError` | O usuário vê que não salvou, o diálogo não fica preso em `loading` e o erro continua chegando ao log/crash reporter em vez de ser engolido |
+| 35 | `InputField` mantém uma linha por padrão; `minLines`/`maxLines` criam texto longo e `number`/`decimal`/`currency` filtram a digitação | Passar `maxLines: null` ao `TextField` o deixa ilimitado, então o padrão precisa ser explícito; preço e quantidade não aceitam letras |
+| 36 | `StylePack.glass` e `StylePack.operational` são presets estáticos, também resolvidos por `StylePack.byName` | Os dois contextos do ERP (cliente arejado e operacional denso) funcionam sem repetir `StylePack.define` |
+| 37 | `AppThemeController.darkMode` acompanha o tema do sistema enquanto o modo é `system`, sincronizado depois do frame | O switch de tema não aparece desligado com o aparelho em modo escuro; notificar durante o build do `EasyApp` lançaria erro de `setState` |
 
 ---
 
