@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart'
-    show Colors, Dialog, showDialog, showModalBottomSheet;
+    show Dialog, showDialog, showModalBottomSheet;
 import 'package:flutter/widgets.dart';
 
 import '../../kernel/kernel.dart';
+import '../../theme_layer/theme_layer.dart';
 import '../actions/button.dart';
 import '../display/card.dart';
 import '../display/label.dart';
@@ -102,7 +103,7 @@ abstract final class Modal {
       barrierDismissible: barrierDismissible,
       builder: (dialogContext) {
         return Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: const Color(0x00000000),
           child: Card(child: builder(dialogContext)),
         );
       },
@@ -200,31 +201,46 @@ abstract final class Modal {
     ),
   );
 
-  /// Exibe conteúdo como bottom sheet, adequado para ações em telas pequenas.
+  /// Exibe conteúdo como bottom sheet pintado com os tokens e o raio do
+  /// `ModalStyleSpec`. Sobe junto com o teclado e respeita a área segura.
+  /// Conteúdo mais alto que a tela deve rolar por conta própria (`ListView`
+  /// ou `SingleChildScrollView` dentro do [builder]).
   static Future<T?> sheet<T>(
     BuildContext context, {
     required WidgetBuilder builder,
     bool isScrollControlled = true,
-  }) => showModalBottomSheet<T>(
-    context: context,
-    isScrollControlled: isScrollControlled,
-    builder: (sheetContext) => AnimatedPadding(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
-      child: SafeArea(top: false, child: builder(sheetContext)),
-    ),
-  );
+  }) {
+    final tokens = AppThemeScope.tokensOf(context);
+    final radius = StylePackScope.of(context).modal.sheetRadius;
+    return showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: isScrollControlled,
+      useSafeArea: true,
+      backgroundColor: tokens.surfaceColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      builder: (sheetContext) => AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(bottom: viewInsetsOf(sheetContext).bottom),
+        child: SafeArea(top: false, child: builder(sheetContext)),
+      ),
+    );
+  }
 
-  /// Escolhe o formato com a largura do pai; a consulta de layout fica no
-  /// Kernel, por meio de [Responsive].
+  /// Escolhe o formato pela largura da viewport: bottom sheet abaixo de
+  /// [sheetBelow], diálogo a partir dela. A medida vem do Kernel.
   static Future<T?> adaptive<T>(
     BuildContext context, {
     required WidgetBuilder builder,
     double sheetBelow = 600,
   }) {
-    final width = MediaQuery.sizeOf(context).width;
-    return width < sheetBelow
+    final resolver = ResponsiveResolver(
+      breakpoints: Breakpoints(tabletMin: sheetBelow, desktopMin: sheetBelow + 1),
+    );
+    return resolver.sizeOf(context) == ScreenSize.mobile
         ? sheet<T>(context, builder: builder)
         : custom<T>(context, builder: builder);
   }
@@ -253,7 +269,7 @@ class _ModalShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0x00000000),
       child: Card(
         child: Div(
           width: 320.px,

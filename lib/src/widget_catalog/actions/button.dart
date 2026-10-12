@@ -111,7 +111,15 @@ class _ButtonState extends State<Button> {
         setState(() => _submitting = true);
         await result;
       }
-    } catch (_) {
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'easy_ui',
+          context: ErrorDescription('ao executar o onSubmit do Button'),
+        ),
+      );
       if (mounted) {
         Toast.error(
           context,

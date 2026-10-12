@@ -1,4 +1,5 @@
 import 'package:easy_ui/src/widget_catalog/actions/button.dart';
+import 'package:easy_ui/src/widget_catalog/display/list_item.dart';
 import 'package:easy_ui/src/widget_catalog/feedback/modal.dart';
 import 'package:easy_ui/src/widget_catalog/inputs/input_field.dart';
 import 'package:easy_ui/src/widget_catalog/inputs/form/validators.dart';
@@ -157,6 +158,94 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(recebido, 'opcao-a');
+    });
+  });
+
+  group('sheet, adaptive e choice', () {
+    Widget abrir(Future<void> Function(BuildContext context) open) => Tela(
+      child: Builder(
+        builder: (context) =>
+            Button(text: 'Abrir', onPressed: () => open(context)),
+      ),
+    );
+
+    testWidgets('adaptive abre bottom sheet em tela estreita', (tester) async {
+      await pumpEasy(
+        tester,
+        abrir(
+          (context) => Modal.adaptive<void>(
+            context,
+            builder: (_) => const Text('conteudo'),
+          ),
+        ),
+        size: const Size(400, 800),
+      );
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(find.byType(Dialog), findsNothing);
+      expect(find.text('conteudo'), findsOneWidget);
+    });
+
+    testWidgets('adaptive abre diálogo em tela larga', (tester) async {
+      await pumpEasy(
+        tester,
+        abrir(
+          (context) => Modal.adaptive<void>(
+            context,
+            builder: (_) => const Text('conteudo'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.byType(BottomSheet), findsNothing);
+    });
+
+    testWidgets('sheet sobe acima do teclado', (tester) async {
+      await pumpEasy(
+        tester,
+        abrir(
+          (context) => Modal.sheet<void>(
+            context,
+            builder: (_) => const Padding(
+              padding: EdgeInsets.all(16),
+              child: TextField(),
+            ),
+          ),
+        ),
+        size: const Size(400, 800),
+      );
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getBottomLeft(find.byType(TextField)).dy,
+        lessThanOrEqualTo(500),
+      );
+    });
+
+    testWidgets('choice marca a opção atual', (tester) async {
+      await pumpEasy(
+        tester,
+        abrir(
+          (context) => Modal.choice<String>(
+            context,
+            title: 'Status',
+            selected: 'b',
+            choices: const [
+              ModalChoice('a', 'Aberto'),
+              ModalChoice('b', 'Fechado'),
+            ],
+          ),
+        ),
+      );
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      final items = tester.widgetList<ListItem>(find.byType(ListItem));
+      expect(items.map((item) => item.selected), [false, true]);
     });
   });
 }
