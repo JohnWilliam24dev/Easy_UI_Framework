@@ -14,7 +14,15 @@ Future<bool> optimistic(
   try {
     await persist();
     return true;
-  } catch (_) {
+  } catch (error, stack) {
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stack,
+        library: 'easy_ui',
+        context: ErrorDescription('ao persistir uma alteração otimista'),
+      ),
+    );
     rollback();
     if (context.mounted) Toast.error(context, text: errorMessage);
     return false;

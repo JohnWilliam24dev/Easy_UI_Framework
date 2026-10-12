@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../kernel/kernel.dart'
+    show Breakpoints, ResponsiveResolver, ScreenSize;
 import '../../theme_layer/theme_layer.dart';
+
+const _shellResolver = ResponsiveResolver(
+  breakpoints: Breakpoints(tabletMin: 760, desktopMin: 761),
+);
 
 class NavDestination {
   const NavDestination({
@@ -46,7 +52,7 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final tokens = AppThemeScope.tokensOf(context);
     final spec = StylePackScope.of(context).nav;
-    final compact = MediaQuery.sizeOf(context).width < 760;
+    final compact = _shellResolver.sizeOf(context) == ScreenSize.mobile;
     final nav = _Navigation(
       widget: widget,
       collapsed: _collapsed,

@@ -6,6 +6,8 @@ import 'loader.dart';
 
 /// Resolve uma operação assíncrona uma vez por ciclo de vida e oferece
 /// loading, erro e recarregamento sem `FutureBuilder` nas telas.
+///
+/// Resultado `null` ou coleção vazia mostra [empty].
 class AsyncView<T> extends StatefulWidget {
   const AsyncView({
     super.key,
@@ -54,7 +56,9 @@ class _AsyncViewState<T> extends State<AsyncView<T>> {
             ErrorState(onRetry: _reload);
       }
       final data = snapshot.data;
-      if (data == null) return widget.empty ?? const EmptyState();
+      if (data == null || (data is Iterable && data.isEmpty)) {
+        return widget.empty ?? const EmptyState();
+      }
       return widget.builder(context, data);
     },
   );

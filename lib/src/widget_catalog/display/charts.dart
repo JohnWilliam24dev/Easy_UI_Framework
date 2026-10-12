@@ -24,7 +24,7 @@ class ProgressBar extends StatelessWidget {
           children: [
             ColoredBox(color: tokens.inputColor),
             FractionallySizedBox(
-              widthFactor: value.clamp(0, 1),
+              widthFactor: value.clamp(0.0, 1.0).toDouble(),
               child: ColoredBox(color: tokens.primaryColor),
             ),
           ],
