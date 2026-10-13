@@ -64,6 +64,7 @@ class ResourceList<T> extends StatelessWidget {
       initialValues: item == null
           ? const <String, Object?>{}
           : (initialValuesFor?.call(item) ?? const <String, Object?>{}),
+      adaptive: true,
       fields: (_) => makeEditor(item),
       onSubmit: (values) async {
         await save(values, item);

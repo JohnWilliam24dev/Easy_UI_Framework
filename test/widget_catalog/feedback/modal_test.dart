@@ -1,6 +1,7 @@
 import 'package:easy_ui/src/widget_catalog/actions/button.dart';
 import 'package:easy_ui/src/widget_catalog/display/list_item.dart';
 import 'package:easy_ui/src/widget_catalog/feedback/modal.dart';
+import 'package:easy_ui/src/widget_catalog/feedback/user_facing_exception.dart';
 import 'package:easy_ui/src/widget_catalog/inputs/input_field.dart';
 import 'package:easy_ui/src/widget_catalog/inputs/form/validators.dart';
 import 'package:easy_ui/src/widget_catalog/layout/tela.dart';
@@ -246,6 +247,103 @@ void main() {
       await tester.pumpAndSettle();
       final items = tester.widgetList<ListItem>(find.byType(ListItem));
       expect(items.map((item) => item.selected), [false, true]);
+    });
+  });
+
+  group('form: falha e adaptive', () {
+    Widget abrir({
+      required Object Function() falha,
+      bool adaptive = false,
+    }) => Tela(
+      child: Builder(
+        builder: (context) => Button(
+          text: 'Abrir',
+          onPressed: () => Modal.form<void>(
+            context,
+            title: 'Editar',
+            adaptive: adaptive,
+            fields: (_) => [const InputField(name: 'nome')],
+            onSubmit: (_) => throw falha(),
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('UserFacingException aparece dentro do modal, sem Toast',
+        (tester) async {
+      await pumpEasy(
+        tester,
+        abrir(falha: () => const UserFacingException('Coluna com comissões')),
+      );
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Coluna com comissões'), findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+      expect(find.text('Editar'), findsOneWidget);
+    });
+
+    testWidgets('erro comum mostra texto genérico inline e é reportado',
+        (tester) async {
+      await pumpEasy(tester, abrir(falha: () => StateError('falhou')));
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isA<StateError>());
+      expect(
+        find.text('Não foi possível concluir a ação. Tente novamente.'),
+        findsOneWidget,
+      );
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('o erro some quando o usuário edita um campo', (tester) async {
+      await pumpEasy(
+        tester,
+        abrir(falha: () => const UserFacingException('Coluna com comissões')),
+      );
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+      await tester.pump();
+      expect(find.text('Coluna com comissões'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'novo');
+      await tester.pump();
+
+      expect(find.text('Coluna com comissões'), findsNothing);
+    });
+
+    testWidgets('adaptive abre bottom sheet em tela estreita', (tester) async {
+      await pumpEasy(
+        tester,
+        abrir(falha: () => StateError('x'), adaptive: true),
+        size: const Size(400, 800),
+      );
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(find.text('Editar'), findsOneWidget);
+    });
+
+    testWidgets('adaptive abre diálogo em tela larga', (tester) async {
+      await pumpEasy(
+        tester,
+        abrir(falha: () => StateError('x'), adaptive: true),
+      );
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.byType(BottomSheet), findsNothing);
     });
   });
 }

@@ -1,5 +1,6 @@
 import 'package:easy_ui/src/theme_layer/theme_layer.dart';
 import 'package:easy_ui/src/widget_catalog/actions/button.dart';
+import 'package:easy_ui/src/widget_catalog/feedback/user_facing_exception.dart';
 import 'package:easy_ui/src/widget_catalog/inputs/form/form_group.dart';
 import 'package:easy_ui/src/widget_catalog/layout/tela.dart';
 import 'package:flutter/material.dart';
@@ -166,21 +167,52 @@ void main() {
     });
   });
 
-  group('backgroundColor', () {
-    testWidgets('preenche com a cor informada e usa onBackground no conteúdo',
+  group('color', () {
+    testWidgets('preenche com a cor dos tokens e usa onBackground no conteúdo',
         (tester) async {
-      const cor = Color(0xFFFF5722);
       await pumpEasy(
         tester,
-        _tela(Button(text: 'Nova coluna', backgroundColor: cor, onPressed: () {})),
+        _tela(
+          Button(
+            text: 'Nova coluna',
+            color: (tokens) => tokens.secondaryColor,
+            onPressed: () {},
+          ),
+        ),
       );
       final style = tester.widget<ElevatedButton>(find.byType(ElevatedButton)).style!;
 
-      expect(style.backgroundColor!.resolve(<WidgetState>{}), cor);
+      expect(style.backgroundColor!.resolve(<WidgetState>{}), testTokens.secondaryColor);
       expect(
         style.foregroundColor!.resolve(<WidgetState>{}),
         testTokens.onBackgroundColor,
       );
+    });
+  });
+
+  group('UserFacingException', () {
+    testWidgets('mostra a mensagem da regra de negócio sem reportar erro',
+        (tester) async {
+      await pumpEasy(
+        tester,
+        Tela(
+          child: FormGroup(
+            children: [
+              Button(
+                text: 'Excluir',
+                onSubmit: (_) async =>
+                    throw const UserFacingException('Coluna com comissões'),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.tap(find.text('Excluir'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Coluna com comissões'), findsOneWidget);
     });
   });
 }

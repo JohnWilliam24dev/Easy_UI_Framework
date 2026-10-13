@@ -7,6 +7,7 @@ import '../inputs/form/form_controller.dart';
 import '../inputs/form/form_scope.dart';
 import '../inputs/form/validators.dart' show FormValues;
 import '../feedback/toast.dart';
+import '../feedback/user_facing_exception.dart';
 
 /// Variação visual do botão.
 enum ButtonVariant {
@@ -65,7 +66,7 @@ class Button extends StatefulWidget {
     this.expanded = false,
     this.icon,
     this.size = ButtonSize.standard,
-    this.backgroundColor,
+    this.color,
   }) : assert(
          onPressed == null || onSubmit == null,
          'Use onPressed ou onSubmit, não os dois.',
@@ -85,9 +86,11 @@ class Button extends StatefulWidget {
   final IconData? icon;
   final ButtonSize size;
 
-  /// Cor de preenchimento para uma ação contextual. Quando informada, o
-  /// conteúdo usa `ThemeTokens.onBackgroundColor` por padrão.
-  final Color? backgroundColor;
+  /// Cor da ação, escolhida a partir dos tokens (nunca uma cor fixa). Nas
+  /// variantes preenchidas é o fundo e o conteúdo usa
+  /// `ThemeTokens.onBackgroundColor`; em `outline` e `ghost` é a cor do
+  /// contorno e do texto.
+  final Color Function(ThemeTokens tokens)? color;
 
   @override
   State<Button> createState() => _ButtonState();
@@ -103,6 +106,7 @@ class _ButtonState extends State<Button> {
     FutureOr<void> Function(FormValues values) onSubmit,
   ) async {
     if (_submitting) return;
+    form.showSubmitError(null);
     if (!form.validate()) return;
 
     try {
@@ -112,19 +116,26 @@ class _ButtonState extends State<Button> {
         await result;
       }
     } catch (error, stack) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stack,
-          library: 'easy_ui',
-          context: ErrorDescription('ao executar o onSubmit do Button'),
-        ),
-      );
-      if (mounted) {
-        Toast.error(
-          context,
-          text: 'Não foi possível concluir a ação. Tente novamente.',
+      final String message;
+      if (error is UserFacingException) {
+        message = error.message;
+      } else {
+        message = 'Não foi possível concluir a ação. Tente novamente.';
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stack,
+            library: 'easy_ui',
+            context: ErrorDescription('ao executar o onSubmit do Button'),
+          ),
         );
+      }
+      if (mounted) {
+        if (form.hasErrorSink) {
+          form.showSubmitError(message);
+        } else {
+          Toast.error(context, text: message);
+        }
       }
     } finally {
       if (mounted && _submitting) setState(() => _submitting = false);
@@ -172,7 +183,7 @@ class _ButtonState extends State<Button> {
         variant == ButtonVariant.pill ||
         variant == ButtonVariant.danger;
     final danger = variant == ButtonVariant.danger;
-    final customBackground = widget.backgroundColor;
+    final customBackground = widget.color?.call(tokens);
     final mainColor = customBackground ?? (danger ? tokens.errorColor : tokens.primaryColor);
     final foreground = filled
         ? (customBackground == null ? tokens.onPrimaryColor : tokens.onBackgroundColor)

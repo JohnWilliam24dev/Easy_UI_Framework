@@ -109,6 +109,8 @@ export 'src/widget_catalog/widget_catalog.dart'
 
 export 'src/widget_catalog/display/charts.dart' show DonutChart, ProgressBar;
 export 'src/widget_catalog/feedback/optimistic.dart' show optimistic;
+export 'src/widget_catalog/feedback/user_facing_exception.dart'
+    show UserFacingException;
 export 'src/widget_catalog/app/app_shell.dart' show AppShell, NavDestination;
 export 'src/widget_catalog/auth/auth_page.dart' show AuthPage;
 export 'src/widget_catalog/data/resource_list.dart' show Field, ResourceList;

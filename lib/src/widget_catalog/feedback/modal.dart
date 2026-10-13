@@ -12,6 +12,7 @@ import '../display/label.dart';
 import '../display/list_item.dart';
 import '../layout/div.dart';
 import '../inputs/form/form_group.dart';
+import '../inputs/form/form_submit_error.dart';
 import '../inputs/form/validators.dart';
 import '../inputs/input_field.dart';
 
@@ -112,6 +113,11 @@ abstract final class Modal {
 
   /// Modal de edição que cria o [FormGroup] e mantém as ações no mesmo
   /// escopo dos campos, portanto o botão Salvar sempre valida antes do envio.
+  ///
+  /// Se [onSubmit] lançar, o formulário continua aberto e a falha aparece
+  /// dentro dele: a mensagem de uma `UserFacingException` como está, ou um
+  /// texto genérico para qualquer outra exceção. Com [adaptive], abre como
+  /// bottom sheet em viewports abaixo de [sheetBelow].
   static Future<T?> form<T>(
     BuildContext context, {
     required String title,
@@ -120,35 +126,59 @@ abstract final class Modal {
     Map<String, Object?> initialValues = const <String, Object?>{},
     String cancelText = 'Cancelar',
     String saveText = 'Salvar',
-  }) => showDialog<T>(
-    context: context,
-    builder: (dialogContext) => _ModalShell(
-      title: title,
-      content: FormGroup(
-        initialValues: initialValues,
-        onSubmit: (values) async {
-          final result = await onSubmit(values);
-          if (dialogContext.mounted) Navigator.of(dialogContext).pop(result);
-        },
-        children: [
-          ...fields(dialogContext),
-          Wrap(
-            alignment: WrapAlignment.end,
-            spacing: 8,
+    bool adaptive = false,
+    double sheetBelow = 600,
+  }) {
+    Widget body(BuildContext hostContext) => FormGroup(
+      initialValues: initialValues,
+      onSubmit: (values) async {
+        final result = await onSubmit(values);
+        if (hostContext.mounted) Navigator.of(hostContext).pop(result);
+      },
+      children: [
+        ...fields(hostContext),
+        const FormSubmitError(),
+        Wrap(
+          alignment: WrapAlignment.end,
+          spacing: 8,
+          children: [
+            Button(
+              text: cancelText,
+              variant: ButtonVariant.ghost,
+              onPressed: () => Navigator.of(hostContext).pop(),
+            ),
+            Button(text: saveText),
+          ],
+        ),
+      ],
+    );
+
+    if (adaptive && _isNarrow(context, sheetBelow)) {
+      return sheet<T>(
+        context,
+        builder: (sheetContext) => SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Button(
-                text: cancelText,
-                variant: ButtonVariant.ghost,
-                onPressed: () => Navigator.of(dialogContext).pop(),
-              ),
-              Button(text: saveText),
+              Label(type: LabelType.subtitle, text: title),
+              const SizedBox(height: 12),
+              body(sheetContext),
             ],
           ),
-        ],
+        ),
+      );
+    }
+    return showDialog<T>(
+      context: context,
+      builder: (dialogContext) => _ModalShell(
+        title: title,
+        content: body(dialogContext),
+        actions: const [],
       ),
-      actions: const [],
-    ),
-  );
+    );
+  }
 
   /// Pede um texto usando o mesmo fluxo validado de [form].
   static Future<String?> prompt(
@@ -237,12 +267,19 @@ abstract final class Modal {
     required WidgetBuilder builder,
     double sheetBelow = 600,
   }) {
-    final resolver = ResponsiveResolver(
-      breakpoints: Breakpoints(tabletMin: sheetBelow, desktopMin: sheetBelow + 1),
-    );
-    return resolver.sizeOf(context) == ScreenSize.mobile
+    return _isNarrow(context, sheetBelow)
         ? sheet<T>(context, builder: builder)
         : custom<T>(context, builder: builder);
+  }
+
+  static bool _isNarrow(BuildContext context, double sheetBelow) {
+    final resolver = ResponsiveResolver(
+      breakpoints: Breakpoints(
+        tabletMin: sheetBelow,
+        desktopMin: sheetBelow + 1,
+      ),
+    );
+    return resolver.sizeOf(context) == ScreenSize.mobile;
   }
 }
 

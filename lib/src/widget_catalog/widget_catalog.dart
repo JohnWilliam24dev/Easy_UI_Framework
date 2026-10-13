@@ -31,6 +31,7 @@ export 'feedback/error_state.dart';
 export 'feedback/modal.dart';
 export 'feedback/optimistic.dart';
 export 'feedback/toast.dart';
+export 'feedback/user_facing_exception.dart';
 export 'inputs/form/form_group.dart';
 export 'inputs/input_field.dart';
 export 'inputs/image_field.dart';

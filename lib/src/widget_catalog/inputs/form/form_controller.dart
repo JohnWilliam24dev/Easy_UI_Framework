@@ -31,6 +31,26 @@ class FormController extends ChangeNotifier {
   final Map<String, Object?> _initialValues;
   FutureOr<void> Function(FormValues values)? onSubmit;
   bool _disposed = false;
+  String? _submitError;
+  int _errorSinks = 0;
+
+  /// Mensagem da última falha de envio, enquanto o usuário não alterar um
+  /// campo nem reenviar.
+  String? get submitError => _submitError;
+
+  /// `true` se há um widget no grupo que exibe [submitError] (assim o
+  /// `Button` não precisa avisar por Toast).
+  bool get hasErrorSink => _errorSinks > 0;
+
+  void showSubmitError(String? message) {
+    if (_submitError == message || _disposed) return;
+    _submitError = message;
+    notifyListeners();
+  }
+
+  void registerErrorSink() => _errorSinks++;
+
+  void unregisterErrorSink() => _errorSinks--;
 
   /// Valores atuais, por `name`.
   FormValues get values {
@@ -109,7 +129,10 @@ class FormController extends ChangeNotifier {
   }
 
   /// Um campo mudou de valor (chamado a partir de um evento do usuário).
-  void fieldChanged() => notifyListeners();
+  void fieldChanged() {
+    _submitError = null;
+    notifyListeners();
+  }
 
   // Entrar/sair da árvore acontece durante o build: avisar os ouvintes só
   // depois do frame evita chamar setState no meio da construção.

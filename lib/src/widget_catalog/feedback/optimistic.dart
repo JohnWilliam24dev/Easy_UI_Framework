@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'toast.dart';
+import 'user_facing_exception.dart';
 
 /// Executa uma alteração imediatamente e a reverte caso [persist] falhe.
 Future<bool> optimistic(
@@ -15,16 +16,21 @@ Future<bool> optimistic(
     await persist();
     return true;
   } catch (error, stack) {
-    FlutterError.reportError(
-      FlutterErrorDetails(
-        exception: error,
-        stack: stack,
-        library: 'easy_ui',
-        context: ErrorDescription('ao persistir uma alteração otimista'),
-      ),
-    );
+    var message = errorMessage;
+    if (error is UserFacingException) {
+      message = error.message;
+    } else {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'easy_ui',
+          context: ErrorDescription('ao persistir uma alteração otimista'),
+        ),
+      );
+    }
     rollback();
-    if (context.mounted) Toast.error(context, text: errorMessage);
+    if (context.mounted) Toast.error(context, text: message);
     return false;
   }
 }
