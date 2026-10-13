@@ -49,7 +49,7 @@ void main() {
       await pumpEasy(tester, _tela(const InputField(type: InputType.number)));
       expect(
         _textField(tester).keyboardType,
-        const TextInputType.numberWithOptions(decimal: true),
+        const TextInputType.numberWithOptions(),
       );
     });
 

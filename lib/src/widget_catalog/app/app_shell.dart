@@ -130,7 +130,7 @@ class _Navigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = AppThemeScope.tokensOf(context);
-    return ColoredBox(
+    return Material(
       color: tokens.surfaceColor,
       child: Column(
         children: [
