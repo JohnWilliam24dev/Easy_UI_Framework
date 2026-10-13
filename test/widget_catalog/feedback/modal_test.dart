@@ -313,6 +313,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
       await tester.pump();
+      await tester.pump();
       expect(find.text('Coluna com comissões'), findsOneWidget);
 
       await tester.enterText(find.byType(TextField), 'novo');

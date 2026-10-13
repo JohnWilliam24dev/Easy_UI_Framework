@@ -52,6 +52,7 @@ A dependência vai em **uma única direção** (4 → 3 → 2 → 1). O Kernel n
 
 ### Princípios de design
 
+- **O catálogo pode usar Material por dentro; o app não.** `Card`, `Menu`, `Tabs`, `AppShell`, `KanbanBoard` e `Modal` montam widgets do Material (`Scaffold`, `ListTile`, `PopupMenuButton`...), sempre pintados com os tokens. As telas do app só importam `easy_ui` e não escrevem `Colors.*` nem `Color(0x...)`: cores vêm de `ThemeTokens`, por isso as props de cor recebem `Color Function(ThemeTokens)`.
 - **Poucos widgets, muitas variações por prop** (`LabelType`, `ButtonVariant`, `InputType`...), não uma classe nova por variação visual.
 - **Cores sempre explícitas.** Consultar tokens sem um `AppThemeScope` acima lança erro.
 - **Uso incorreto falha alto**, com mensagem dizendo o que fazer (`Button(onSubmit:)` fora de um `FormGroup`, `name` duplicado, etc.).
@@ -525,6 +526,8 @@ Grid.builder(
 )
 ```
 
+> O `Grid.builder` só é preguiçoso com `scrollable: true`. Com o padrão `false` o grid se ajusta ao conteúdo (`shrinkWrap`) e constrói todos os itens, como o `Grid` comum.
+
 Parâmetros: `itemCount` e `itemBuilder` no lugar de `children`; os demais (`minCell`, `maxCell`, `cellRatio`, `gap`, `scrollable`, `breakpoints`) são os mesmos do `Grid`. **`Grid.fit`** define colunas por largura mínima de célula (`minCellWidth`) e altura fixa (`cellHeight`) em vez de contagem de colunas.
 
 > ⚠️ A altura da célula vem do `cellRatio`, **não** do conteúdo. Se o conteúdo do card for mais alto que `largura ÷ cellRatio`, dá overflow. Em telas estreitas as células ficam menores, então teste em larguras pequenas e use um `cellRatio` menor (célula mais alta) com folga.
@@ -756,14 +759,17 @@ Toggle<String>(type: ToggleType.radio, value: 'cartao', groupValue: metodo, onCh
 | `expanded` | `bool` | `false` | Ocupa toda a largura disponível. |
 | `icon` | `IconData?` | `null` | Ícone antes do texto. |
 | `size` | `ButtonSize` | `standard` | Tamanho do botão. |
-| `backgroundColor` | `Color?` | `null` | Preenchimento para uma ação contextual (ex.: botão sobre uma coluna colorida). O texto e o ícone passam a usar `onBackgroundColor` dos tokens. |
+| `color` | `Color Function(ThemeTokens)?` | `null` | Cor da ação, sempre derivada dos tokens (como `Icon.color`): `color: (tokens) => tokens.secondaryColor`. Nas variantes preenchidas é o fundo e o conteúdo usa `onBackgroundColor`; em `outline` e `ghost` é a cor do contorno e do texto. |
 
 Regras:
 - Use `onPressed` **ou** `onSubmit`, nunca os dois. Sem nenhum dos dois o botão fica **desabilitado**.
 - `onSubmit` valida tudo; se inválido, revela os erros e foca o primeiro campo inválido; se válido, chama `onSubmit(values)`.
 - Se `onSubmit` devolver um `Future`, o botão entra em `loading` sozinho até terminar e ignora cliques repetidos.
-- Se `onSubmit` lançar uma exceção (síncrona ou do `Future`), o botão sai do `loading`, mostra `Toast.error` ('Não foi possível concluir a ação. Tente novamente.') e reporta a exceção em `FlutterError.reportError`, para o log ou o crash reporter do app. Isso vale também para `ResourceList` e `Modal.form`, que salvam por `onSubmit`.
-- `backgroundColor` só afeta variantes preenchidas (`solid`, `pill`, `danger`); em `outline` e `ghost` vira a cor do contorno e do texto.
+- Se `onSubmit` lançar uma exceção (síncrona ou do `Future`), o botão sai do `loading` e avisa o usuário:
+  - `UserFacingException('mensagem')`: mostra a mensagem como está (use para regras de negócio, ex.: `throw UserFacingException('Coluna com comissões não pode ser excluída')`) e **não** reporta erro;
+  - qualquer outra exceção: mostra 'Não foi possível concluir a ação. Tente novamente.' e reporta em `FlutterError.reportError`, para o log ou o crash reporter do app.
+- O aviso é um `Toast.error`; dentro de `Modal.form` (e portanto de `ResourceList`) ele aparece **dentro do modal**, acima dos botões, e some quando o usuário edita um campo ou reenvia.
+- `optimistic` segue a mesma regra de `UserFacingException`.
 - Por padrão o botão de envio fica **clicável** e mostra os erros ao clicar (um botão desabilitado não diz ao usuário o que falta). `disableWhenInvalid` é opt-in.
 - A "pele" (raio, altura mínima, padding, peso da fonte) vem do `ButtonStyleSpec` do pack; as cores, dos tokens.
 
@@ -828,7 +834,7 @@ Métodos estáticos (não há prop `type`, porque o retorno muda em cada um):
 | `Modal.confirm(context, title:, message:, confirmText: 'Confirmar', cancelText: 'Cancelar')` | `Future<bool?>` | `true` confirmou, `false` cancelou, `null` fechou sem escolher (tocando fora). |
 | `Modal.alert(context, title:, message:, okText: 'OK')` | `Future<void>` | Mensagem com um botão. |
 | `Modal.custom<T>(context, builder:, barrierDismissible: true)` | `Future<T?>` | Conteúdo livre dentro do mesmo invólucro visual (`Card`). Você decide como fechar: `Navigator.of(context).pop(valor)`. |
-| `Modal.form<T>(context, title:, fields:, onSubmit:, initialValues:, saveText: 'Salvar')` | `Future<T?>` | Diálogo com `FormGroup` pronto: Salvar valida antes de chamar `onSubmit` e fecha com o valor devolvido. |
+| `Modal.form<T>(context, title:, fields:, onSubmit:, initialValues:, saveText: 'Salvar', adaptive: false)` | `Future<T?>` | Diálogo com `FormGroup` pronto: Salvar valida antes de chamar `onSubmit` e fecha com o valor devolvido. Falhas de `onSubmit` aparecem dentro do modal. Com `adaptive: true` abre como bottom sheet em viewports abaixo de 600 (o `ResourceList` já usa assim). |
 | `Modal.prompt(context, title:, label:, hint:, initialValue:, validation:)` | `Future<String?>` | Pede um texto com validação. |
 | `Modal.choice<T>(context, title:, choices:, selected:)` | `Future<T?>` | Lista de `ModalChoice(valor, 'Rótulo')`; a opção igual a `selected` aparece marcada. |
 | `Modal.sheet<T>(context, builder:, isScrollControlled: true)` | `Future<T?>` | Bottom sheet com a cor de superfície dos tokens e o raio `sheetRadius` do `ModalStyleSpec`. Sobe junto com o teclado e respeita a área segura. Conteúdo mais alto que a tela precisa rolar por conta própria (`ListView` ou `SingleChildScrollView` no `builder`). |

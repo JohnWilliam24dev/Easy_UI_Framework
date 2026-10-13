@@ -319,6 +319,11 @@ pubspec.yaml                       → versionamento semver desde o início
 | 35 | `InputField` mantém uma linha por padrão; `minLines`/`maxLines` criam texto longo e `number`/`decimal`/`currency` filtram a digitação | Passar `maxLines: null` ao `TextField` o deixa ilimitado, então o padrão precisa ser explícito; preço e quantidade não aceitam letras |
 | 36 | `StylePack.glass` e `StylePack.operational` são presets estáticos, também resolvidos por `StylePack.byName` | Os dois contextos do ERP (cliente arejado e operacional denso) funcionam sem repetir `StylePack.define` |
 | 37 | `AppThemeController.darkMode` acompanha o tema do sistema enquanto o modo é `system`, sincronizado depois do frame | O switch de tema não aparece desligado com o aparelho em modo escuro; notificar durante o build do `EasyApp` lançaria erro de `setState` |
+| 38 | `Button.color` é `Color Function(ThemeTokens)?`, não um `Color` | Uma cor fixa na tela reabre a brecha que `ThemeTokens` fecha (decisão #2); a função segue o padrão de `Icon.color` e o nome vale também para `outline`/`ghost`, onde a cor é de contorno e texto |
+| 39 | `UserFacingException(message)`: `Button(onSubmit:)` e `optimistic` mostram a mensagem como está e não reportam; outras exceções mostram texto genérico e são reportadas | Regras de negócio (ex.: coluna com comissões não pode ser excluída) precisam chegar ao usuário sem virarem alerta de bug |
+| 40 | Falha de envio em `Modal.form` aparece inline no próprio modal (`FormSubmitError` registrado no `FormController`); fora de um modal continua sendo `Toast.error` | Um Toast fica atrás da barreira escura do diálogo |
+| 41 | `Modal.form(adaptive: true)` abre como bottom sheet em viewports estreitas; `ResourceList` usa `adaptive: true` | Edição em celular é mais confortável em sheet, e a medida continua vindo do Kernel |
+| 42 | O catálogo (Camada 3) pode usar widgets Material por dentro; o código do app não | O Material é detalhe de implementação, como já descrito na decisão #17; o que é proibido é a cor ou o estilo do Material chegar ao app |
 
 ---
 
