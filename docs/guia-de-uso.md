@@ -52,6 +52,7 @@ A dependência vai em **uma única direção** (4 → 3 → 2 → 1). O Kernel n
 
 ### Princípios de design
 
+- **O catálogo pode usar Material por dentro; o app não.** `Card`, `Menu`, `Tabs`, `AppShell`, `KanbanBoard` e `Modal` montam widgets do Material (`Scaffold`, `ListTile`, `PopupMenuButton`...), sempre pintados com os tokens. As telas do app só importam `easy_ui` e não escrevem `Colors.*` nem `Color(0x...)`: cores vêm de `ThemeTokens`, por isso as props de cor recebem `Color Function(ThemeTokens)`.
 - **Poucos widgets, muitas variações por prop** (`LabelType`, `ButtonVariant`, `InputType`...), não uma classe nova por variação visual.
 - **Cores sempre explícitas.** Consultar tokens sem um `AppThemeScope` acima lança erro.
 - **Uso incorreto falha alto**, com mensagem dizendo o que fazer (`Button(onSubmit:)` fora de um `FormGroup`, `name` duplicado, etc.).
@@ -287,7 +288,65 @@ final erp = StylePack.define(
   label: LabelStyleSpec.compact(),
   spacingScale: 0.8,          // mais denso
 );
+
+// Presets prontos para os dois contextos mais comuns:
+final glass = StylePack.glass;
+final operational = StylePack.operational;
 ```
+
+| Preset | Inputs | Botão | Card | Label | `spacingScale` |
+|---|---|---|---|---|---|
+| `StylePack.glass` | `rounded(radius: 16)` | `pill()` | `CardStyleSpec.glass()` (translúcido, com borda) | padrão | `1.15` |
+| `StylePack.operational` | `underline()` | `compact()` | `flat()` | `compact()` | `0.8` |
+
+Os dois presets também podem ser buscados por nome (`StylePack.byName('glass')`, `StylePack.byName('operational')`) e aparecem em `StylePack.definedNames`.
+
+**Exemplo: área do cliente em `glass` e área interna em `operational`**
+
+```dart
+void main() => runApp(
+      EasyApp(
+        theme: tema,
+        stylePack: StylePack.glass,
+        home: const ClienteHome(),
+      ),
+    );
+
+class ClienteHome extends StatelessWidget {
+  const ClienteHome({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tela(
+      child: Div(
+        children: [
+          const Label(type: LabelType.title, text: 'Meus pedidos'),
+          Card(child: Label(text: 'Pedido #123')),
+          Button(
+            text: 'Painel interno',
+            variant: ButtonVariant.outline,
+            onPressed: () => Nav.push(context, const PainelInterno()),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PainelInterno extends StatelessWidget {
+  const PainelInterno({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StylePackScope(
+      pack: StylePack.operational,
+      child: Tela(child: Card(child: Label(text: 'Tabela densa'))),
+    );
+  }
+}
+```
+
+O `Card` com `glass` usa `panelColor` com transparência e `panelBorderColor` dos tokens; por isso funciona melhor sobre um `Backdrop` ou imagem de fundo.
 
 | Parâmetro | Tipo | Padrão |
 |---|---|---|
@@ -390,12 +449,26 @@ O contêiner de layout — no lugar de `Container` + `Row`/`Column`/`Stack` + `P
 | Parâmetro | Tipo | Padrão | Descrição |
 |---|---|---|---|
 | `children` | `List<Widget>` | `[]` | Filhos. Use `LayoutItem` para dar tamanho a um filho. |
-| `direction` | `LayoutDirection` | `vertical` | `vertical` (coluna), `horizontal` (linha) ou `layered` (sobrepostos). |
+| `direction` | `LayoutDirectionValue` | `vertical` | `LayoutDirection.vertical` (coluna), `horizontal` (linha), `layered` (sobrepostos), `wrap` (quebra linha) ou um `ResponsiveDirection` que troca a direção pela largura do pai. |
 | `align` | `Alignment` | `topLeft` | Alinhamento do conteúdo **dentro** do `Div`. |
 | `position` | `LayoutPosition?` | `null` | Onde o **próprio** `Div` fica **dentro do pai**. |
 | `gap` | `Dimension?` | `2 × baseSpacing × spacingScale` | Espaço entre filhos. `0.px` remove. Ignorado em `layered`. |
 | `width` | `Dimension?` | `null` | `px`, `vw`, `vh` ou `pct` (não `fr`). |
 | `height` | `Dimension?` | `null` | Idem. |
+
+`direction` só aceita `LayoutDirection` ou `ResponsiveDirection`; qualquer outro valor é erro de compilação.
+
+```dart
+Div(
+  direction: const ResponsiveDirection(
+    mobile: LayoutDirection.vertical,
+    desktop: LayoutDirection.horizontal,
+  ),
+  children: [...],
+)
+```
+
+`ResponsiveDirection` segue a regra de `ResponsiveValue`: tablet cai para mobile e desktop cai para tablet quando não declarados.
 
 **`align` × `position`** — a confusão mais comum:
 
@@ -439,6 +512,23 @@ Grade responsiva para itens de tamanho uniforme (ex.: cards de pedidos). Não é
 ```dart
 Grid(minCell: 2, maxCell: 4, cellRatio: 1.5, children: [Card(...), Card(...)])
 ```
+
+**`Grid.builder`** cria só os itens visíveis; use com listas grandes e `scrollable: true`:
+
+```dart
+Grid.builder(
+  minCell: 2,
+  maxCell: 4,
+  cellRatio: 1.5,
+  scrollable: true,
+  itemCount: pedidos.length,
+  itemBuilder: (context, index) => Card(child: Label(text: pedidos[index].titulo)),
+)
+```
+
+> O `Grid.builder` só é preguiçoso com `scrollable: true`. Com o padrão `false` o grid se ajusta ao conteúdo (`shrinkWrap`) e constrói todos os itens, como o `Grid` comum.
+
+Parâmetros: `itemCount` e `itemBuilder` no lugar de `children`; os demais (`minCell`, `maxCell`, `cellRatio`, `gap`, `scrollable`, `breakpoints`) são os mesmos do `Grid`. **`Grid.fit`** define colunas por largura mínima de célula (`minCellWidth`) e altura fixa (`cellHeight`) em vez de contagem de colunas.
 
 > ⚠️ A altura da célula vem do `cellRatio`, **não** do conteúdo. Se o conteúdo do card for mais alto que `largura ÷ cellRatio`, dá overflow. Em telas estreitas as células ficam menores, então teste em larguras pequenas e use um `cellRatio` menor (célula mais alta) com folga.
 
@@ -507,6 +597,7 @@ Fundo = `surfaceColor`; raio, elevação e padding vêm do `CardStyleSpec` do pa
 | `direction` | `LayoutDirection` | `horizontal` | `horizontal` ou `vertical` (não aceita `layered`). |
 | `thickness` | `double` | `1` | Espessura. |
 | `inset` | `double` | `0` | Recuo nas duas pontas, na direção da linha. |
+| `spacing` | `double` | `0` | Espaço externo antes e depois da linha, no eixo perpendicular a ela (acima e abaixo numa linha horizontal). |
 
 Cor = `borderColor`. Estica sozinho no eixo cruzado.
 
@@ -546,7 +637,9 @@ Regras:
 |---|---|---|---|
 | `name` | `String?` | `null` | Identifica o campo no `FormGroup`. Obrigatório se tiver `validation` dentro de um grupo. |
 | `hint` | `String?` | `null` | Texto de dica. |
-| `type` | `InputType` | `text` | `text`, `email`, `password`, `number`, `phone`, `search`. |
+| `type` | `InputType` | `text` | `text`, `email`, `password`, `number`, `decimal`, `currency`, `phone`, `search`. |
+| `minLines` / `maxLines` | `int?` | `null` | Texto longo. Sem nenhum dos dois o campo tem **uma linha só**. Só `minLines`: começa com esse número de linhas e cresce com o texto. Ignorados em `password`. |
+| `prefix` / `suffix` | `Widget?` | `null` | Conteúdo antes/depois do texto, como símbolo de moeda. |
 | `validation` | `List<Validator>` | `[]` | Regras, avaliadas em ordem; a primeira que falhar mostra a mensagem. |
 | `controller` | `TextEditingController?` | `null` | Controller externo (opcional; o campo cria um interno). |
 | `onChanged` | `ValueChanged<String>?` | `null` | A cada alteração. |
@@ -556,7 +649,14 @@ Regras:
 | `autofocus` | `bool` | `false` | Foco ao abrir. |
 | `textInputAction` | `TextInputAction?` | `null` (`search` → `search`) | Ação do teclado. |
 
-Comportamento por `type`: `password` esconde o texto e ganha o botão de mostrar/ocultar; `search` ganha o ícone de lupa; `email`/`number`/`phone` usam o teclado correspondente; `email`, `number`, `phone` e `password` desligam autocorreção e sugestões.
+Comportamento por `type`: `password` esconde o texto e ganha o botão de mostrar/ocultar; `search` ganha o ícone de lupa; `number` usa teclado numérico e aceita só dígitos; `decimal` e `currency` usam teclado numérico decimal e aceitam dígitos e separador (`,` ou `.`); `email`, `number`, `phone` e `password` desligam autocorreção e sugestões.
+
+`currency` não desenha símbolo nem formata sozinho: passe `prefix: Label(text: 'R\$')` e use `formatMoney` para exibir e `parseDecimal` para ler o valor.
+
+```dart
+InputField(name: 'preco', type: InputType.currency, prefix: const Label(text: 'R\$'))
+InputField(name: 'descricao', label: 'Descrição', minLines: 3)
+```
 
 A aparência (outline, rounded, underline, filled, sombra, padding) vem do `InputStyleSpec` do pack ativo.
 
@@ -657,11 +757,19 @@ Toggle<String>(type: ToggleType.radio, value: 'cartao', groupValue: metodo, onCh
 | `disableWhenInvalid` | `bool` | `false` | Com `onSubmit`: desabilita enquanto o formulário estiver inválido. |
 | `loading` | `bool` | `false` | Mostra um indicador (mantendo o tamanho) e ignora toques. |
 | `expanded` | `bool` | `false` | Ocupa toda a largura disponível. |
+| `icon` | `IconData?` | `null` | Ícone antes do texto. |
+| `size` | `ButtonSize` | `standard` | Tamanho do botão. |
+| `color` | `Color Function(ThemeTokens)?` | `null` | Cor da ação, sempre derivada dos tokens (como `Icon.color`): `color: (tokens) => tokens.secondaryColor`. Nas variantes preenchidas é o fundo e o conteúdo usa `onBackgroundColor`; em `outline` e `ghost` é a cor do contorno e do texto. |
 
 Regras:
 - Use `onPressed` **ou** `onSubmit`, nunca os dois. Sem nenhum dos dois o botão fica **desabilitado**.
 - `onSubmit` valida tudo; se inválido, revela os erros e foca o primeiro campo inválido; se válido, chama `onSubmit(values)`.
 - Se `onSubmit` devolver um `Future`, o botão entra em `loading` sozinho até terminar e ignora cliques repetidos.
+- Se `onSubmit` lançar uma exceção (síncrona ou do `Future`), o botão sai do `loading` e avisa o usuário:
+  - `UserFacingException('mensagem')`: mostra a mensagem como está (use para regras de negócio, ex.: `throw UserFacingException('Coluna com comissões não pode ser excluída')`) e **não** reporta erro;
+  - qualquer outra exceção: mostra 'Não foi possível concluir a ação. Tente novamente.' e reporta em `FlutterError.reportError`, para o log ou o crash reporter do app.
+- O aviso é um `Toast.error`; dentro de `Modal.form` (e portanto de `ResourceList`) ele aparece **dentro do modal**, acima dos botões, e some quando o usuário edita um campo ou reenvia.
+- `optimistic` segue a mesma regra de `UserFacingException`.
 - Por padrão o botão de envio fica **clicável** e mostra os erros ao clicar (um botão desabilitado não diz ao usuário o que falta). `disableWhenInvalid` é opt-in.
 - A "pele" (raio, altura mínima, padding, peso da fonte) vem do `ButtonStyleSpec` do pack; as cores, dos tokens.
 
@@ -719,13 +827,18 @@ Um novo toast **substitui** o anterior. Devolve um controller (`.close()`, ou ag
 
 ### `Modal`
 
-Três métodos estáticos (não há prop `type`, porque o retorno muda em cada um):
+Métodos estáticos (não há prop `type`, porque o retorno muda em cada um):
 
 | Método | Retorno | Descrição |
 |---|---|---|
 | `Modal.confirm(context, title:, message:, confirmText: 'Confirmar', cancelText: 'Cancelar')` | `Future<bool?>` | `true` confirmou, `false` cancelou, `null` fechou sem escolher (tocando fora). |
 | `Modal.alert(context, title:, message:, okText: 'OK')` | `Future<void>` | Mensagem com um botão. |
 | `Modal.custom<T>(context, builder:, barrierDismissible: true)` | `Future<T?>` | Conteúdo livre dentro do mesmo invólucro visual (`Card`). Você decide como fechar: `Navigator.of(context).pop(valor)`. |
+| `Modal.form<T>(context, title:, fields:, onSubmit:, initialValues:, saveText: 'Salvar', adaptive: false)` | `Future<T?>` | Diálogo com `FormGroup` pronto: Salvar valida antes de chamar `onSubmit` e fecha com o valor devolvido. Falhas de `onSubmit` aparecem dentro do modal. Com `adaptive: true` abre como bottom sheet em viewports abaixo de 600 (o `ResourceList` já usa assim). |
+| `Modal.prompt(context, title:, label:, hint:, initialValue:, validation:)` | `Future<String?>` | Pede um texto com validação. |
+| `Modal.choice<T>(context, title:, choices:, selected:)` | `Future<T?>` | Lista de `ModalChoice(valor, 'Rótulo')`; a opção igual a `selected` aparece marcada. |
+| `Modal.sheet<T>(context, builder:, isScrollControlled: true)` | `Future<T?>` | Bottom sheet com a cor de superfície dos tokens e o raio `sheetRadius` do `ModalStyleSpec`. Sobe junto com o teclado e respeita a área segura. Conteúdo mais alto que a tela precisa rolar por conta própria (`ListView` ou `SingleChildScrollView` no `builder`). |
+| `Modal.adaptive<T>(context, builder:, sheetBelow: 600)` | `Future<T?>` | Bottom sheet em viewports abaixo de `sheetBelow` e diálogo a partir dela. |
 
 ```dart
 final apagar = await Modal.confirm(

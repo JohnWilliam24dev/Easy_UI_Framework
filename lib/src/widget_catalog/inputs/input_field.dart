@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../theme_layer/theme_layer.dart';
 import 'form/form_controller.dart';
@@ -7,7 +8,7 @@ import 'form/validators.dart';
 import 'input_decoration_builder.dart';
 
 /// Natureza do dado digitado; define teclado e comportamento.
-enum InputType { text, email, password, number, phone, search }
+enum InputType { text, email, password, number, decimal, currency, phone, search }
 
 /// Campo de entrada: TextField + InputDecoration, pintado com os tokens e a
 /// aparência do `StylePack` ativo (outline, rounded, underline, filled).
@@ -23,6 +24,12 @@ enum InputType { text, email, password, number, phone, search }
 /// - [errorText], se informado, tem prioridade sobre a validação (útil para
 ///   erros vindos do servidor).
 ///
+/// - `number` aceita só dígitos; `decimal` e `currency` aceitam dígitos e
+///   separador (`,` ou `.`), e `currency` não desenha símbolo: use [prefix]
+///   (`Label(text: 'R\$')`) e `formatMoney`/`parseDecimal` para exibir e ler;
+/// - [minLines]/[maxLines] criam um campo de texto longo; sem eles o campo
+///   tem uma linha só.
+///
 /// Máscara entra em uma próxima etapa.
 ///
 /// ```dart
@@ -33,6 +40,8 @@ class InputField extends StatefulWidget {
     super.key,
     this.name,
     this.hint,
+    this.label,
+    this.initialValue,
     this.type = InputType.text,
     this.validation = const <Validator>[],
     this.controller,
@@ -42,10 +51,20 @@ class InputField extends StatefulWidget {
     this.enabled = true,
     this.autofocus = false,
     this.textInputAction,
-  });
+    this.minLines,
+    this.maxLines,
+    this.prefix,
+    this.suffix,
+  }) : assert(minLines == null || minLines > 0, 'minLines deve ser > 0.'),
+       assert(
+         maxLines == null || minLines == null || maxLines >= minLines,
+         'maxLines deve ser >= minLines.',
+       );
 
   final String? name;
   final String? hint;
+  final String? label;
+  final String? initialValue;
   final InputType type;
   final List<Validator> validation;
   final TextEditingController? controller;
@@ -56,11 +75,22 @@ class InputField extends StatefulWidget {
   final bool autofocus;
   final TextInputAction? textInputAction;
 
+  /// Número mínimo/máximo de linhas. Ao informar [minLines], deixe
+  /// [maxLines] nulo para permitir que o campo cresça conforme o texto.
+  final int? minLines;
+  final int? maxLines;
+
+  /// Conteúdo exibido antes/depois do texto. Ícones automáticos de busca e
+  /// senha continuam sendo usados quando estes valores não são informados.
+  final Widget? prefix;
+  final Widget? suffix;
+
   @override
   State<InputField> createState() => _InputFieldState();
 }
 
-class _InputFieldState extends State<InputField> implements FormFieldHandle {
+class _InputFieldState extends State<InputField>
+    implements FormFieldHandle<Object?> {
   bool _obscured = true;
   bool _touched = false;
   bool _revealed = false;
@@ -72,7 +102,8 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
   String? _registeredName;
 
   TextEditingController get _controller {
-    return widget.controller ?? (_ownController ??= TextEditingController());
+    return widget.controller ??
+        (_ownController ??= TextEditingController(text: widget.initialValue));
   }
 
   // ---- FormFieldHandle ----------------------------------------------------
@@ -81,13 +112,23 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
   String get name => _registeredName!;
 
   @override
-  String get value => _controller.text;
+  Object? get value => _controller.text;
 
   @override
   List<Validator> get validation => widget.validation;
 
   @override
   FocusNode get focusNode => _focusNode;
+
+  @override
+  void reset(Object? value) {
+    _controller.text = value?.toString() ?? widget.initialValue ?? '';
+    if (mounted)
+      setState(() {
+        _touched = false;
+        _revealed = false;
+      });
+  }
 
   @override
   void reveal() {
@@ -132,6 +173,10 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
     }
     if (widget.name != null) {
       _registeredName = widget.name;
+      final initial = controller.initialValueFor(widget.name!);
+      if (initial != null && widget.controller == null) {
+        _controller.text = initial.toString();
+      }
       controller.attach(this);
       controller.addListener(_onFormChanged);
     }
@@ -172,7 +217,7 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
 
   String? _currentError() {
     if (widget.validation.isEmpty) return null;
-    final all = _form?.values ?? const <String, String>{};
+    final all = _form?.values ?? const FormValues(<String, Object?>{});
     return runValidators(widget.validation, _controller.text, all);
   }
 
@@ -181,9 +226,21 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
       InputType.text => TextInputType.text,
       InputType.email => TextInputType.emailAddress,
       InputType.password => TextInputType.visiblePassword,
-      InputType.number => const TextInputType.numberWithOptions(decimal: true),
+      InputType.number => const TextInputType.numberWithOptions(),
+      InputType.decimal || InputType.currency =>
+        const TextInputType.numberWithOptions(decimal: true),
       InputType.phone => TextInputType.phone,
       InputType.search => TextInputType.text,
+    };
+  }
+
+  static List<TextInputFormatter>? _formattersFor(InputType type) {
+    return switch (type) {
+      InputType.number => [FilteringTextInputFormatter.digitsOnly],
+      InputType.decimal || InputType.currency => [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+      ],
+      _ => null,
     };
   }
 
@@ -193,18 +250,20 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
     final pack = StylePackScope.of(context);
     final type = widget.type;
 
-    final error = widget.errorText ??
-        ((_touched || _revealed) ? _currentError() : null);
+    final error =
+        widget.errorText ?? ((_touched || _revealed) ? _currentError() : null);
 
     final isPassword = type == InputType.password;
     final isFreeText = type == InputType.text || type == InputType.search;
+    final maxLines = widget.maxLines ?? (widget.minLines == null ? 1 : null);
+    final multiline = !isPassword && maxLines != 1;
 
-    Widget? prefix;
-    Widget? suffix;
-    if (type == InputType.search) {
+    Widget? prefix = widget.prefix;
+    Widget? suffix = widget.suffix;
+    if (prefix == null && type == InputType.search) {
       prefix = Icon(Icons.search, color: tokens.mutedTextColor);
     }
-    if (isPassword) {
+    if (suffix == null && isPassword) {
       suffix = IconButton(
         icon: Icon(
           _obscured ? Icons.visibility : Icons.visibility_off,
@@ -222,8 +281,12 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
       enabled: widget.enabled,
       autofocus: widget.autofocus,
       obscureText: isPassword && _obscured,
-      keyboardType: _keyboardFor(type),
-      textInputAction: widget.textInputAction ??
+      minLines: isPassword ? null : widget.minLines,
+      maxLines: isPassword ? 1 : maxLines,
+      keyboardType: multiline ? TextInputType.multiline : _keyboardFor(type),
+      inputFormatters: _formattersFor(type),
+      textInputAction:
+          widget.textInputAction ??
           (type == InputType.search ? TextInputAction.search : null),
       autocorrect: isFreeText,
       enableSuggestions: isFreeText,
@@ -237,6 +300,7 @@ class _InputFieldState extends State<InputField> implements FormFieldHandle {
         tokens: tokens,
         pack: pack,
         hint: widget.hint,
+        label: widget.label,
         errorText: error,
         prefixIcon: prefix,
         suffixIcon: suffix,

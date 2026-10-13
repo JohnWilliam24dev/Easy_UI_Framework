@@ -1,5 +1,7 @@
 import 'package:easy_ui/src/theme_layer/theme_layer.dart';
 import 'package:easy_ui/src/widget_catalog/actions/button.dart';
+import 'package:easy_ui/src/widget_catalog/feedback/user_facing_exception.dart';
+import 'package:easy_ui/src/widget_catalog/inputs/form/form_group.dart';
 import 'package:easy_ui/src/widget_catalog/layout/tela.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -130,6 +132,87 @@ void main() {
       );
       // 800 de viewport - 2 * 16 de padding da Tela.
       expect(tester.getSize(find.byType(ElevatedButton)).width, 768);
+    });
+  });
+
+  group('falha no envio', () {
+    testWidgets('mostra Toast de erro, reporta a exceção e libera o botão',
+        (tester) async {
+      await pumpEasy(
+        tester,
+        Tela(
+          child: FormGroup(
+            children: [
+              Button(
+                text: 'Salvar',
+                onSubmit: (_) async => throw StateError('falhou'),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.tap(find.text('Salvar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isA<StateError>());
+      expect(
+        find.text('Não foi possível concluir a ação. Tente novamente.'),
+        findsOneWidget,
+      );
+      expect(
+        tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
+        isNotNull,
+      );
+    });
+  });
+
+  group('color', () {
+    testWidgets('preenche com a cor dos tokens e usa onBackground no conteúdo',
+        (tester) async {
+      await pumpEasy(
+        tester,
+        _tela(
+          Button(
+            text: 'Nova coluna',
+            color: (tokens) => tokens.secondaryColor,
+            onPressed: () {},
+          ),
+        ),
+      );
+      final style = tester.widget<ElevatedButton>(find.byType(ElevatedButton)).style!;
+
+      expect(style.backgroundColor!.resolve(<WidgetState>{}), testTokens.secondaryColor);
+      expect(
+        style.foregroundColor!.resolve(<WidgetState>{}),
+        testTokens.onBackgroundColor,
+      );
+    });
+  });
+
+  group('UserFacingException', () {
+    testWidgets('mostra a mensagem da regra de negócio sem reportar erro',
+        (tester) async {
+      await pumpEasy(
+        tester,
+        Tela(
+          child: FormGroup(
+            children: [
+              Button(
+                text: 'Excluir',
+                onSubmit: (_) async =>
+                    throw const UserFacingException('Coluna com comissões'),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.tap(find.text('Excluir'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Coluna com comissões'), findsOneWidget);
     });
   });
 }

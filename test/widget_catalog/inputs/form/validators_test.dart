@@ -1,9 +1,19 @@
 import 'package:easy_ui/src/widget_catalog/inputs/form/validators.dart';
 import 'package:flutter_test/flutter_test.dart' hide matches;
 
-const FormValues _nada = <String, String>{};
+const FormValues _nada = FormValues(<String, Object?>{});
 
 void main() {
+  group('FormValues', () {
+    test('mantém acesso textual e expõe valores tipados', () {
+      const values = FormValues({'name': 'Ana', 'active': true, 'count': 2});
+      expect(values['name'], 'Ana');
+      expect(values.string('count'), '2');
+      expect(values.boolean('active'), isTrue);
+      expect(values.get<int>('count'), 2);
+    });
+  });
+
   group('isRequired', () {
     test('rejeita vazio e só espaços', () {
       expect(isRequired()('', _nada), 'Campo obrigatório');
@@ -15,7 +25,10 @@ void main() {
     });
 
     test('aceita mensagem própria', () {
-      expect(isRequired(message: 'Informe o nome')('', _nada), 'Informe o nome');
+      expect(
+        isRequired(message: 'Informe o nome')('', _nada),
+        'Informe o nome',
+      );
     });
   });
 
@@ -56,7 +69,13 @@ void main() {
     });
 
     test('rejeita formatos inválidos', () {
-      for (final invalido in ['maria', 'maria@', '@exemplo.com', 'a@b', 'a b@c.com']) {
+      for (final invalido in [
+        'maria',
+        'maria@',
+        '@exemplo.com',
+        'a@b',
+        'a b@c.com',
+      ]) {
         expect(isEmail()(invalido, _nada), 'E-mail inválido', reason: invalido);
       }
     });
@@ -68,8 +87,10 @@ void main() {
 
   group('isPassword', () {
     test('por padrão exige só o tamanho mínimo', () {
-      expect(isPassword()('1234567', _nada),
-          'A senha precisa ter 8 ou mais caracteres');
+      expect(
+        isPassword()('1234567', _nada),
+        'A senha precisa ter 8 ou mais caracteres',
+      );
       expect(isPassword()('12345678', _nada), isNull);
     });
 
@@ -108,7 +129,10 @@ void main() {
     test('valida contra a expressão', () {
       expect(matches(cep)('40000-000', _nada), isNull);
       expect(matches(cep)('abc', _nada), 'Formato inválido');
-      expect(matches(cep, message: 'CEP inválido')('abc', _nada), 'CEP inválido');
+      expect(
+        matches(cep, message: 'CEP inválido')('abc', _nada),
+        'CEP inválido',
+      );
     });
 
     test('vazio é válido', () {
@@ -118,7 +142,7 @@ void main() {
 
   group('sameAs', () {
     test('compara com o outro campo', () {
-      const all = {'password': 'segredo123'};
+      const all = FormValues({'password': 'segredo123'});
       expect(sameAs('password')('segredo123', all), isNull);
       expect(sameAs('password')('outro', all), 'Os valores não conferem');
     });
@@ -128,7 +152,10 @@ void main() {
     });
 
     test('vazio é válido', () {
-      expect(sameAs('password')('', const {'password': 'abc'}), isNull);
+      expect(
+        sameAs('password')('', const FormValues({'password': 'abc'})),
+        isNull,
+      );
     });
   });
 
@@ -152,6 +179,17 @@ void main() {
     test('lista vazia ou tudo válido devolve null', () {
       expect(runValidators(const [], 'x', _nada), isNull);
       expect(runValidators([isRequired(), minLength(1)], 'x', _nada), isNull);
+    });
+  });
+
+  group('validadores tipados', () {
+    test('número, limites e booleano obrigatório', () {
+      expect(isNumber()('12,5', _nada), isNull);
+      expect(isNumber()('abc', _nada), 'Número inválido');
+      expect(min(10)(9, _nada), isNotNull);
+      expect(max(10)(11, _nada), isNotNull);
+      expect(mustBeTrue()(false, _nada), isNotNull);
+      expect(isRequiredValue()(null, _nada), isNotNull);
     });
   });
 }

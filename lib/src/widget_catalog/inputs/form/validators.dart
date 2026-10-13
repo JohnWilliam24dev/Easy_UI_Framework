@@ -1,14 +1,27 @@
 /// Valores atuais de um formulário, por `name` de campo.
-typedef FormValues = Map<String, String>;
+///
+/// O acesso legado `values['email']` continua devolvendo texto quando o valor
+/// é textual. Para campos tipados, prefira [get], [string] e [boolean].
+class FormValues {
+  const FormValues(Map<String, Object?> values) : _values = values;
+
+  final Map<String, Object?> _values;
+
+  T? get<T>(String name) => _values[name] as T?;
+  String? string(String name) => get<Object?>(name)?.toString();
+  bool? boolean(String name) => get<bool>(name);
+  String? operator [](String name) => string(name);
+  Map<String, Object?> toMap() => Map<String, Object?>.unmodifiable(_values);
+}
 
 /// Regra de validação: recebe o valor do campo e os valores de todos os
 /// campos do formulário; devolve a mensagem de erro, ou `null` se é válido.
-typedef Validator = String? Function(String value, FormValues all);
+typedef Validator = String? Function(Object? value, FormValues all);
 
 /// Roda os [validators] em ordem e devolve a primeira mensagem de erro.
 String? runValidators(
   List<Validator> validators,
-  String value,
+  Object? value,
   FormValues all,
 ) {
   for (final validator in validators) {
@@ -24,14 +37,16 @@ String? runValidators(
 
 /// Exige um valor não vazio (espaços não contam).
 Validator isRequired({String message = 'Campo obrigatório'}) {
-  return (value, _) => value.trim().isEmpty ? message : null;
+  return (value, _) =>
+      value?.toString().trim().isEmpty ?? true ? message : null;
 }
 
 /// Exige pelo menos [min] caracteres.
 Validator minLength(int min, {String? message}) {
   return (value, _) {
-    if (value.isEmpty) return null;
-    return value.length >= min
+    final text = value?.toString() ?? '';
+    if (text.isEmpty) return null;
+    return text.length >= min
         ? null
         : (message ?? 'Use pelo menos $min caracteres');
   };
@@ -40,8 +55,9 @@ Validator minLength(int min, {String? message}) {
 /// Aceita no máximo [max] caracteres.
 Validator maxLength(int max, {String? message}) {
   return (value, _) {
-    if (value.isEmpty) return null;
-    return value.length <= max
+    final text = value?.toString() ?? '';
+    if (text.isEmpty) return null;
+    return text.length <= max
         ? null
         : (message ?? 'Use no máximo $max caracteres');
   };
@@ -51,8 +67,9 @@ Validator maxLength(int max, {String? message}) {
 Validator lengthBetween(int min, int max, {String? message}) {
   assert(min <= max, 'min deve ser <= max.');
   return (value, _) {
-    if (value.isEmpty) return null;
-    final ok = value.length >= min && value.length <= max;
+    final text = value?.toString() ?? '';
+    if (text.isEmpty) return null;
+    final ok = text.length >= min && text.length <= max;
     return ok ? null : (message ?? 'Use entre $min e $max caracteres');
   };
 }
@@ -62,8 +79,9 @@ final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 /// Exige um e-mail em formato válido.
 Validator isEmail({String message = 'E-mail inválido'}) {
   return (value, _) {
-    if (value.isEmpty) return null;
-    return _emailPattern.hasMatch(value) ? null : message;
+    final text = value?.toString() ?? '';
+    if (text.isEmpty) return null;
+    return _emailPattern.hasMatch(text) ? null : message;
   };
 }
 
@@ -92,12 +110,14 @@ Validator isPassword({
   final symbol = RegExp(r'[^\p{L}\p{N}\s]', unicode: true);
 
   return (value, _) {
-    if (value.isEmpty) return null;
-    final ok = value.length >= min &&
-        (!requireUppercase || upper.hasMatch(value)) &&
-        (!requireLowercase || lower.hasMatch(value)) &&
-        (!requireDigit || digit.hasMatch(value)) &&
-        (!requireSymbol || symbol.hasMatch(value));
+    final text = value?.toString() ?? '';
+    if (text.isEmpty) return null;
+    final ok =
+        text.length >= min &&
+        (!requireUppercase || upper.hasMatch(text)) &&
+        (!requireLowercase || lower.hasMatch(text)) &&
+        (!requireDigit || digit.hasMatch(text)) &&
+        (!requireSymbol || symbol.hasMatch(text));
     return ok ? null : (message ?? padrao);
   };
 }
@@ -105,8 +125,9 @@ Validator isPassword({
 /// Exige que o valor case com [pattern].
 Validator matches(RegExp pattern, {String message = 'Formato inválido'}) {
   return (value, _) {
-    if (value.isEmpty) return null;
-    return pattern.hasMatch(value) ? null : message;
+    final text = value?.toString() ?? '';
+    if (text.isEmpty) return null;
+    return pattern.hasMatch(text) ? null : message;
   };
 }
 
@@ -115,7 +136,40 @@ Validator matches(RegExp pattern, {String message = 'Formato inválido'}) {
 /// para que um nome digitado errado apareça logo em vez de passar calado.
 Validator sameAs(String field, {String message = 'Os valores não conferem'}) {
   return (value, all) {
-    if (value.isEmpty) return null;
-    return value == all[field] ? null : message;
+    final text = value?.toString() ?? '';
+    if (text.isEmpty) return null;
+    return text == all[field] ? null : message;
   };
 }
+
+/// Exige um valor numérico, aceitando ponto ou vírgula decimal.
+Validator isNumber({String message = 'Número inválido'}) => (value, _) {
+  if (value == null || value.toString().trim().isEmpty) return null;
+  return num.tryParse(value.toString().replaceAll(',', '.')) == null
+      ? message
+      : null;
+};
+
+Validator min(num minimum, {String? message}) => (value, _) {
+  if (value == null || value.toString().isEmpty) return null;
+  final parsed = num.tryParse(value.toString().replaceAll(',', '.'));
+  return parsed == null || parsed >= minimum
+      ? null
+      : (message ?? 'Use um valor mínimo de $minimum');
+};
+
+Validator max(num maximum, {String? message}) => (value, _) {
+  if (value == null || value.toString().isEmpty) return null;
+  final parsed = num.tryParse(value.toString().replaceAll(',', '.'));
+  return parsed == null || parsed <= maximum
+      ? null
+      : (message ?? 'Use um valor máximo de $maximum');
+};
+
+Validator isCurrency({String message = 'Valor monetário inválido'}) =>
+    isNumber(message: message);
+Validator mustBeTrue({String message = 'Você precisa aceitar'}) =>
+    (value, _) => value == true ? null : message;
+Validator isRequiredValue({String message = 'Campo obrigatório'}) =>
+    (value, _) =>
+        value == null || value.toString().trim().isEmpty ? message : null;

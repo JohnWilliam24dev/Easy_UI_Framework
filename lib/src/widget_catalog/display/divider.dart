@@ -15,6 +15,7 @@ class Divider extends StatelessWidget {
     this.direction = LayoutDirection.horizontal,
     this.thickness = 1,
     this.inset = 0,
+    this.spacing = 0,
   }) : assert(
           direction != LayoutDirection.layered,
           'Divider não aceita direction layered.',
@@ -23,6 +24,8 @@ class Divider extends StatelessWidget {
   final LayoutDirection direction;
   final double thickness;
   final double inset;
+  /// Espaço externo antes e depois da linha, na direção perpendicular.
+  final double spacing;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +34,7 @@ class Divider extends StatelessWidget {
 
     return horizontal
         ? Padding(
-            padding: EdgeInsets.symmetric(horizontal: inset),
+            padding: EdgeInsets.symmetric(horizontal: inset, vertical: spacing),
             child: SizedBox(
               width: double.infinity,
               height: thickness,
@@ -39,7 +42,7 @@ class Divider extends StatelessWidget {
             ),
           )
         : Padding(
-            padding: EdgeInsets.symmetric(vertical: inset),
+            padding: EdgeInsets.symmetric(vertical: inset, horizontal: spacing),
             child: SizedBox(
               width: thickness,
               height: double.infinity,

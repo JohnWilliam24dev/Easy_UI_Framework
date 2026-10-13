@@ -1,4 +1,10 @@
-import 'package:flutter/material.dart' show ScaffoldMessenger, ScaffoldFeatureController, SnackBar, SnackBarClosedReason;
+import 'package:flutter/material.dart'
+    show
+        ScaffoldMessenger,
+        ScaffoldFeatureController,
+        SnackBar,
+        SnackBarBehavior,
+        SnackBarClosedReason;
 import 'package:flutter/widgets.dart' hide Icon;
 
 import '../../kernel/kernel.dart';
@@ -26,6 +32,7 @@ abstract final class Toast {
     required String text,
     ToastType type = ToastType.info,
     Duration duration = const Duration(seconds: 4),
+    bool floating = false,
   }) {
     final tokens = AppThemeScope.tokensOf(context);
     final background = switch (type) {
@@ -46,6 +53,7 @@ abstract final class Toast {
     return messenger.showSnackBar(
       SnackBar(
         backgroundColor: background,
+        behavior: floating ? SnackBarBehavior.floating : SnackBarBehavior.fixed,
         duration: duration,
         content: Div(
           direction: LayoutDirection.horizontal,
@@ -72,6 +80,31 @@ abstract final class Toast {
       ),
     );
   }
+
+  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason> success(
+    BuildContext context, {
+    required String text,
+    Duration duration = const Duration(seconds: 4),
+    bool floating = false,
+  }) => show(
+    context,
+    text: text,
+    type: ToastType.success,
+    duration: duration,
+    floating: floating,
+  );
+  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason> error(
+    BuildContext context, {
+    required String text,
+    Duration duration = const Duration(seconds: 4),
+    bool floating = false,
+  }) => show(
+    context,
+    text: text,
+    type: ToastType.error,
+    duration: duration,
+    floating: floating,
+  );
 }
 
 // Ícones do Material por código, para o Toast não depender de

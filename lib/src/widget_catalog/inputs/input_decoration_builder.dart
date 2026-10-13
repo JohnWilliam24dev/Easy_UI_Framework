@@ -8,6 +8,7 @@ InputDecoration buildInputDecoration({
   required ThemeTokens tokens,
   required StylePack pack,
   String? hint,
+  String? label,
   String? errorText,
   Widget? prefixIcon,
   Widget? suffixIcon,
@@ -43,6 +44,7 @@ InputDecoration buildInputDecoration({
 
   return InputDecoration(
     hintText: hint,
+    labelText: label,
     hintStyle: TextStyle(
       color: tokens.mutedTextColor,
       fontFamily: tokens.fontFamily,

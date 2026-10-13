@@ -24,6 +24,15 @@ void main() {
       expect(custom.sizeFor(900), ScreenSize.desktop);
     });
 
+    test('resolve breakpoint nomeado', () {
+      const custom = ResponsiveResolver(
+        breakpoints: Breakpoints(named: {'compact': 780, 'wide': 1280}),
+      );
+      expect(custom.isAtLeast('compact', 780), isTrue);
+      expect(custom.isAtLeast('wide', 1024), isFalse);
+      expect(() => custom.isAtLeast('missing', 100), throwsArgumentError);
+    });
+
     test('rejeita configuração inválida', () {
       expect(
         () => Breakpoints(tabletMin: 1000, desktopMin: 500),

@@ -4,6 +4,9 @@ import 'package:easy_ui/src/widget_catalog/actions/button.dart';
 import 'package:easy_ui/src/widget_catalog/inputs/form/form_group.dart';
 import 'package:easy_ui/src/widget_catalog/inputs/form/validators.dart';
 import 'package:easy_ui/src/widget_catalog/inputs/input_field.dart';
+import 'package:easy_ui/src/widget_catalog/inputs/select.dart';
+import 'package:easy_ui/src/widget_catalog/inputs/select_option.dart';
+import 'package:easy_ui/src/widget_catalog/inputs/toggle.dart';
 import 'package:easy_ui/src/widget_catalog/layout/tela.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -60,8 +63,35 @@ Finder get _botaoEntrar => find.widgetWithText(ElevatedButton, 'Entrar');
 
 void main() {
   group('envio', () {
-    testWidgets('formulário válido chama onSubmit com os valores',
-        (tester) async {
+    testWidgets('aceita valores iniciais e envio no próprio grupo', (
+      tester,
+    ) async {
+      FormValues? received;
+      await pumpEasy(
+        tester,
+        Tela(
+          child: FormGroup(
+            initialValues: const {'name': 'Ana'},
+            onSubmit: (values) => received = values,
+            children: const [
+              InputField(name: 'name'),
+              Button(text: 'Salvar'),
+            ],
+          ),
+        ),
+      );
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Ana',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+      await tester.pump();
+      expect(received?['name'], 'Ana');
+    });
+
+    testWidgets('formulário válido chama onSubmit com os valores', (
+      tester,
+    ) async {
       FormValues? recebidos;
       await pumpEasy(tester, _loginForm(onSubmit: (v) => recebidos = v));
       await _preencher(tester, username: 'maria', password: 'senha1234');
@@ -69,11 +99,15 @@ void main() {
       await tester.tap(_botaoEntrar);
       await tester.pump();
 
-      expect(recebidos, {'username': 'maria', 'password': 'senha1234'});
+      expect(recebidos?.toMap(), {
+        'username': 'maria',
+        'password': 'senha1234',
+      });
     });
 
-    testWidgets('formulário inválido não chama onSubmit e revela os erros',
-        (tester) async {
+    testWidgets('formulário inválido não chama onSubmit e revela os erros', (
+      tester,
+    ) async {
       var chamadas = 0;
       await pumpEasy(tester, _loginForm(onSubmit: (_) => chamadas++));
 
@@ -105,10 +139,7 @@ void main() {
 
     testWidgets('onPressed comum não valida nada', (tester) async {
       var cancelou = false;
-      await pumpEasy(
-        tester,
-        _loginForm(onCancel: () => cancelou = true),
-      );
+      await pumpEasy(tester, _loginForm(onCancel: () => cancelou = true));
 
       await tester.tap(find.widgetWithText(OutlinedButton, 'Cancelar'));
       await tester.pump();
@@ -133,10 +164,7 @@ void main() {
   group('onSubmit assíncrono', () {
     testWidgets('mostra loading até o Future terminar', (tester) async {
       final completer = Completer<void>();
-      await pumpEasy(
-        tester,
-        _loginForm(onSubmit: (_) => completer.future),
-      );
+      await pumpEasy(tester, _loginForm(onSubmit: (_) => completer.future));
       await _preencher(tester, username: 'maria', password: 'senha1234');
 
       await tester.tap(_botaoEntrar);
@@ -154,10 +182,12 @@ void main() {
       var chamadas = 0;
       await pumpEasy(
         tester,
-        _loginForm(onSubmit: (_) {
-          chamadas++;
-          return completer.future;
-        }),
+        _loginForm(
+          onSubmit: (_) {
+            chamadas++;
+            return completer.future;
+          },
+        ),
       );
       await _preencher(tester, username: 'maria', password: 'senha1234');
 
@@ -226,23 +256,108 @@ void main() {
     });
   });
 
-  group('uso incorreto', () {
-    testWidgets('Button com onSubmit fora de um FormGroup lança FlutterError',
-        (tester) async {
-      await pumpEasy(
-        tester,
-        Tela(child: Button(text: 'Entrar', onSubmit: (_) {})),
-      );
-      expect(tester.takeException(), isA<FlutterError>());
-    });
-
-    testWidgets('campo com validation sem name dentro do FormGroup falha',
-        (tester) async {
+  group('campos tipados', () {
+    testWidgets('Select participa da validação e envia o valor tipado', (
+      tester,
+    ) async {
+      FormValues? received;
       await pumpEasy(
         tester,
         Tela(
           child: FormGroup(
-            children: [InputField(validation: [isRequired()])],
+            onSubmit: (values) => received = values,
+            children: [
+              Select<String>.single(
+                name: 'estado',
+                options: const [
+                  SelectOption('ce', 'Ceará'),
+                  SelectOption('sp', 'São Paulo'),
+                ],
+                onChanged: (_) {},
+                validation: [isRequiredValue()],
+              ),
+              const Button(text: 'Salvar'),
+            ],
+          ),
+        ),
+      );
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+      await tester.pump();
+      expect(find.text('Campo obrigatório'), findsOneWidget);
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ceará').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+      await tester.pump();
+
+      expect(received?.get<String>('estado'), 'ce');
+    });
+
+    testWidgets('Toggle recebe initialValues, valida e envia boolean', (
+      tester,
+    ) async {
+      FormValues? received;
+      await pumpEasy(
+        tester,
+        Tela(
+          child: FormGroup(
+            initialValues: const {'aceitaTermos': false},
+            onSubmit: (values) => received = values,
+            children: [
+              Toggle<bool>(
+                name: 'aceitaTermos',
+                type: ToggleType.checkbox,
+                value: true,
+                label: 'Aceito os termos',
+                onChanged: (_) {},
+                validation: [mustBeTrue()],
+              ),
+              const Button(text: 'Cadastrar'),
+            ],
+          ),
+        ),
+      );
+
+      expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Cadastrar'));
+      await tester.pump();
+      expect(find.text('Você precisa aceitar'), findsOneWidget);
+
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Cadastrar'));
+      await tester.pump();
+
+      expect(received?.boolean('aceitaTermos'), isTrue);
+    });
+  });
+
+  group('uso incorreto', () {
+    testWidgets('Button com onSubmit fora de um FormGroup lança FlutterError', (
+      tester,
+    ) async {
+      await pumpEasy(
+        tester,
+        Tela(
+          child: Button(text: 'Entrar', onSubmit: (_) {}),
+        ),
+      );
+      expect(tester.takeException(), isA<FlutterError>());
+    });
+
+    testWidgets('campo com validation sem name dentro do FormGroup falha', (
+      tester,
+    ) async {
+      await pumpEasy(
+        tester,
+        Tela(
+          child: FormGroup(
+            children: [
+              InputField(validation: [isRequired()]),
+            ],
           ),
         ),
       );

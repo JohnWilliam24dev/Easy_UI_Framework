@@ -49,6 +49,10 @@ void main() {
       expect(_light.baseSpacing, 8);
       expect(_light.baseFontSize, 14);
       expect(_light.fontFamily, isNull);
+      expect(_light.headingColor, _light.textColor);
+      expect(_light.inputColor, _light.surfaceColor);
+      expect(_light.selectedColor, _light.primaryColor.withValues(alpha: 0.12));
+      expect(_light.chartColors, hasLength(4));
     });
 
     test('valores explícitos sobrescrevem o fallback', () {
@@ -75,6 +79,10 @@ void main() {
       expect(_light.copyWith().hashCode, _light.hashCode);
       expect(_light, isNot(_dark));
     });
+  });
+
+  test('tint aplica opacidade explícita', () {
+    expect(tint(const Color(0xFFFF0000), 0.2), const Color(0x33FF0000));
   });
 
   group('AppTheme', () {
@@ -106,18 +114,27 @@ void main() {
   });
 
   group('AppThemeScope', () {
-    testWidgets('modo system segue a plataforma e reage a mudanças',
-        (tester) async {
+    testWidgets('modo system segue a plataforma e reage a mudanças', (
+      tester,
+    ) async {
       const tema = AppTheme(light: _light, dark: _dark);
       ThemeTokens? visto;
 
       await tester.pumpWidget(
-        _host(theme: tema, platform: Brightness.dark, onTokens: (t) => visto = t),
+        _host(
+          theme: tema,
+          platform: Brightness.dark,
+          onTokens: (t) => visto = t,
+        ),
       );
       expect(visto, _dark);
 
       await tester.pumpWidget(
-        _host(theme: tema, platform: Brightness.light, onTokens: (t) => visto = t),
+        _host(
+          theme: tema,
+          platform: Brightness.light,
+          onTokens: (t) => visto = t,
+        ),
       );
       expect(visto, _light);
     });

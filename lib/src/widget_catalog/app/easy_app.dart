@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../kernel/kernel.dart' show platformBrightnessOf;
 import '../../theme_layer/theme_layer.dart';
 import 'material_bridge.dart';
 
@@ -22,29 +23,59 @@ class EasyApp extends StatelessWidget {
     super.key,
     required this.theme,
     required this.home,
+    this.themeController,
     this.stylePack = StylePack.standard,
     this.title = '',
     this.debugShowCheckedModeBanner = false,
+    this.routes = const <String, WidgetBuilder>{},
+    this.onGenerateRoute,
+    this.navigatorKey,
+    this.navigatorObservers = const <NavigatorObserver>[],
   });
 
   final AppTheme theme;
+  final AppThemeController? themeController;
   final Widget home;
   final StylePack stylePack;
   final String title;
   final bool debugShowCheckedModeBanner;
+  final Map<String, WidgetBuilder> routes;
+  final RouteFactory? onGenerateRoute;
+  final GlobalKey<NavigatorState>? navigatorKey;
+  final List<NavigatorObserver> navigatorObservers;
 
   @override
   Widget build(BuildContext context) {
+    final controller = themeController;
+    if (controller == null) return _buildApp(theme);
+    return ValueListenableBuilder<AppThemeMode>(
+      valueListenable: controller,
+      builder: (context, mode, _) =>
+          _buildApp(theme.copyWith(mode: mode), controller),
+    );
+  }
+
+  Widget _buildApp(AppTheme activeTheme, [AppThemeController? controller]) {
     return MaterialApp(
       title: title,
       debugShowCheckedModeBanner: debugShowCheckedModeBanner,
-      theme: materialThemeFor(theme.light, Brightness.light),
-      darkTheme: materialThemeFor(theme.dark, Brightness.dark),
-      themeMode: materialThemeModeFor(theme.mode),
+      theme: materialThemeFor(activeTheme.light, Brightness.light),
+      darkTheme: materialThemeFor(activeTheme.dark, Brightness.dark),
+      themeMode: materialThemeModeFor(activeTheme.mode),
+      routes: routes,
+      onGenerateRoute: onGenerateRoute,
+      navigatorKey: navigatorKey,
+      navigatorObservers: navigatorObservers,
       // Dentro do builder já existe MediaQuery, necessário para o modo system.
       builder: (context, child) {
+        if (controller != null) {
+          final platformBrightness = platformBrightnessOf(context);
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => controller.syncSystemBrightness(platformBrightness),
+          );
+        }
         return AppThemeScope(
-          theme: theme,
+          theme: activeTheme,
           child: StylePackScope(
             pack: stylePack,
             child: child ?? const SizedBox.shrink(),

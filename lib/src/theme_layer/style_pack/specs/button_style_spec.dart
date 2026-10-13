@@ -10,21 +10,27 @@ class ButtonStyleSpec {
     this.minHeight = 44,
     this.horizontalPadding = 20,
     this.fontWeight = FontWeight.w600,
+    this.iconGap = 8,
+    this.iconSize = 18,
   });
 
   /// Cantos totalmente arredondados (formato de pílula).
   const ButtonStyleSpec.pill()
-      : radius = pillRadius,
-        minHeight = 48,
-        horizontalPadding = 28,
-        fontWeight = FontWeight.w600;
+    : radius = pillRadius,
+      minHeight = 48,
+      horizontalPadding = 28,
+      fontWeight = FontWeight.w600,
+      iconGap = 8,
+      iconSize = 18;
 
   /// Botão baixo e justo, para telas densas.
   const ButtonStyleSpec.compact()
-      : radius = 4,
-        minHeight = 32,
-        horizontalPadding = 12,
-        fontWeight = FontWeight.w500;
+    : radius = 4,
+      minHeight = 32,
+      horizontalPadding = 12,
+      fontWeight = FontWeight.w500,
+      iconGap = 6,
+      iconSize = 16;
 
   /// Raio grande o bastante para virar pílula em qualquer altura.
   static const double pillRadius = 999;
@@ -33,6 +39,8 @@ class ButtonStyleSpec {
   final double minHeight;
   final double horizontalPadding;
   final FontWeight fontWeight;
+  final double iconGap;
+  final double iconSize;
 
   @override
   bool operator ==(Object other) {
@@ -40,10 +48,18 @@ class ButtonStyleSpec {
         other.radius == radius &&
         other.minHeight == minHeight &&
         other.horizontalPadding == horizontalPadding &&
-        other.fontWeight == fontWeight;
+        other.fontWeight == fontWeight &&
+        other.iconGap == iconGap &&
+        other.iconSize == iconSize;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(radius, minHeight, horizontalPadding, fontWeight);
+  int get hashCode => Object.hash(
+    radius,
+    minHeight,
+    horizontalPadding,
+    fontWeight,
+    iconGap,
+    iconSize,
+  );
 }

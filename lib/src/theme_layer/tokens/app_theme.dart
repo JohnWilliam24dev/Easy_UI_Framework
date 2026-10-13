@@ -34,6 +34,11 @@ class AppTheme {
   final ThemeTokens dark;
   final AppThemeMode mode;
 
+  /// Cópia do tema com outro modo de brilho.
+  AppTheme copyWith({AppThemeMode? mode}) {
+    return AppTheme(light: light, dark: dark, mode: mode ?? this.mode);
+  }
+
   /// Tokens correspondentes a um brilho.
   ThemeTokens tokensFor(Brightness brightness) {
     return brightness == Brightness.dark ? dark : light;

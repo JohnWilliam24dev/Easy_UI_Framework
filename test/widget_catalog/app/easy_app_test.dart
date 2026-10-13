@@ -1,4 +1,5 @@
 import 'package:easy_ui/src/theme_layer/theme_layer.dart';
+import 'package:easy_ui/src/widget_catalog/app/easy_app.dart';
 import 'package:easy_ui/src/widget_catalog/app/material_bridge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -92,6 +93,29 @@ void main() {
 
       expect(tokens, testDarkTokens);
       expect(primaryDoMaterial, testDarkTokens.primaryColor);
+    });
+
+    testWidgets('darkMode acompanha o sistema sem sair do modo system',
+        (tester) async {
+      tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+      addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+      final controller = AppThemeController();
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        EasyApp(
+          theme: const AppTheme(light: testTokens, dark: testDarkTokens),
+          themeController: controller,
+          home: const SizedBox(),
+        ),
+      );
+      await tester.pump();
+
+      expect(controller.mode, AppThemeMode.system);
+      expect(controller.darkMode.value, isTrue);
+
+      controller.darkMode.value = false;
+      expect(controller.mode, AppThemeMode.light);
     });
   });
 }

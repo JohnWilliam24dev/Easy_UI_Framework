@@ -5,7 +5,9 @@ import 'package:flutter/widgets.dart';
 import '../../theme_layer/theme_layer.dart';
 
 /// Papel semântico da cor de um [Badge].
-enum BadgeColor { success, warning, error, info, neutral }
+enum BadgeColor { success, warning, error, info, neutral, accent }
+
+enum BadgeVariant { solid, soft }
 
 /// Marcador pequeno de status/tag: um fundo colorido com texto, na cor
 /// correspondente do tema.
@@ -14,10 +16,18 @@ enum BadgeColor { success, warning, error, info, neutral }
 /// Badge(text: 'Pago', color: BadgeColor.success)
 /// ```
 class Badge extends StatelessWidget {
-  const Badge({super.key, required this.text, this.color = BadgeColor.neutral});
+  const Badge({
+    super.key,
+    required this.text,
+    this.color = BadgeColor.neutral,
+    this.variant = BadgeVariant.solid,
+    this.onRemove,
+  });
 
   final String text;
   final BadgeColor color;
+  final BadgeVariant variant;
+  final VoidCallback? onRemove;
 
   Color _backgroundOf(ThemeTokens tokens) {
     return switch (color) {
@@ -26,6 +36,7 @@ class Badge extends StatelessWidget {
       BadgeColor.error => tokens.errorColor,
       BadgeColor.info => tokens.infoColor,
       BadgeColor.neutral => tokens.borderColor,
+      BadgeColor.accent => tokens.accentColor,
     };
   }
 
@@ -37,21 +48,45 @@ class Badge extends StatelessWidget {
         ? const Color(0xFFFFFFFF)
         : const Color(0xFF000000);
 
+    final displayBackground = variant == BadgeVariant.soft
+        ? background.withValues(alpha: 0.14)
+        : background;
+    final displayForeground = variant == BadgeVariant.soft
+        ? background
+        : foreground;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: background,
+        color: displayBackground,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: foreground,
-            fontSize: tokens.baseFontSize * 0.8,
-            fontWeight: FontWeight.w600,
-            fontFamily: tokens.fontFamily,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              text,
+              style: TextStyle(
+                color: displayForeground,
+                fontSize: tokens.baseFontSize * 0.8,
+                fontWeight: FontWeight.w600,
+                fontFamily: tokens.fontFamily,
+              ),
+            ),
+            if (onRemove != null) ...[
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: onRemove,
+                child: Text(
+                  '×',
+                  style: TextStyle(
+                    color: displayForeground,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

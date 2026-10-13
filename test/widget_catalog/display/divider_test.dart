@@ -50,4 +50,35 @@ void main() {
     );
     expect(padding.padding, const EdgeInsets.symmetric(horizontal: 20));
   });
+
+  testWidgets('spacing afasta a linha horizontal acima e abaixo',
+      (tester) async {
+    await pumpEasy(tester, const Tela(child: easy.Divider(spacing: 12)));
+
+    expect(tester.getSize(find.byType(easy.Divider)).height, 25);
+    final padding = tester.widget<Padding>(
+      find.descendant(
+        of: find.byType(easy.Divider),
+        matching: find.byType(Padding),
+      ),
+    );
+    expect(padding.padding, const EdgeInsets.symmetric(vertical: 12));
+  });
+
+  testWidgets('spacing afasta a linha vertical dos lados', (tester) async {
+    await pumpEasy(
+      tester,
+      const Tela(
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            height: 100,
+            child: easy.Divider(direction: LayoutDirection.vertical, spacing: 8),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.getSize(find.byType(easy.Divider)).width, 17);
+  });
 }

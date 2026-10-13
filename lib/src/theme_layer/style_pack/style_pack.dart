@@ -26,11 +26,35 @@ class StylePack {
     this.button = const ButtonStyleSpec(),
     this.card = const CardStyleSpec(),
     this.label = const LabelStyleSpec(),
+    this.modal = const ModalStyleSpec(),
+    this.nav = const NavStyleSpec(),
+    this.kanban = const KanbanStyleSpec(),
+    this.listItem = const ListItemStyleSpec(),
+    this.motion = const MotionStyleSpec(),
     this.spacingScale = 1,
   }) : assert(spacingScale > 0, 'spacingScale deve ser > 0.');
 
   /// Pack usado quando não há nenhum `StylePackScope` acima na árvore.
   static const StylePack standard = StylePack(name: 'standard');
+
+  /// Superfícies translúcidas, inputs arredondados e espaçamento arejado.
+  static const StylePack glass = StylePack(
+    name: 'glass',
+    inputText: InputStyleSpec.rounded(radius: 16),
+    button: ButtonStyleSpec.pill(),
+    card: CardStyleSpec.glass(),
+    spacingScale: 1.15,
+  );
+
+  /// Aparência compacta para fluxos internos, tabelas e operações densas.
+  static const StylePack operational = StylePack(
+    name: 'operational',
+    inputText: InputStyleSpec.underline(),
+    button: ButtonStyleSpec.compact(),
+    card: CardStyleSpec.flat(),
+    label: LabelStyleSpec.compact(),
+    spacingScale: 0.8,
+  );
 
   static final Map<String, StylePack> _registry = <String, StylePack>{};
 
@@ -43,6 +67,11 @@ class StylePack {
     ButtonStyleSpec button = const ButtonStyleSpec(),
     CardStyleSpec card = const CardStyleSpec(),
     LabelStyleSpec label = const LabelStyleSpec(),
+    ModalStyleSpec modal = const ModalStyleSpec(),
+    NavStyleSpec nav = const NavStyleSpec(),
+    KanbanStyleSpec kanban = const KanbanStyleSpec(),
+    ListItemStyleSpec listItem = const ListItemStyleSpec(),
+    MotionStyleSpec motion = const MotionStyleSpec(),
     double spacingScale = 1,
   }) {
     assert(name.isNotEmpty, 'O nome do StylePack não pode ser vazio.');
@@ -56,6 +85,11 @@ class StylePack {
       button: button,
       card: card,
       label: label,
+      modal: modal,
+      nav: nav,
+      kanban: kanban,
+      listItem: listItem,
+      motion: motion,
       spacingScale: spacingScale,
     );
     _registry[name] = pack;
@@ -67,6 +101,8 @@ class StylePack {
     final pack = _registry[name];
     if (pack != null) return pack;
     if (name == standard.name) return standard;
+    if (name == glass.name) return glass;
+    if (name == operational.name) return operational;
     throw ArgumentError.value(
       name,
       'name',
@@ -75,8 +111,12 @@ class StylePack {
   }
 
   /// Nomes dos packs disponíveis.
-  static List<String> get definedNames =>
-      <String>[standard.name, ..._registry.keys];
+  static List<String> get definedNames => <String>[
+    standard.name,
+    glass.name,
+    operational.name,
+    ..._registry.keys,
+  ];
 
   /// Remove todos os packs definidos (só para testes).
   @visibleForTesting
@@ -87,6 +127,11 @@ class StylePack {
   final ButtonStyleSpec button;
   final CardStyleSpec card;
   final LabelStyleSpec label;
+  final ModalStyleSpec modal;
+  final NavStyleSpec nav;
+  final KanbanStyleSpec kanban;
+  final ListItemStyleSpec listItem;
+  final MotionStyleSpec motion;
 
   /// Multiplicador do espaçamento base: acima de 1 fica mais arejado
   /// (convidativo), abaixo de 1 mais denso (operacional).
@@ -105,12 +150,28 @@ class StylePack {
         other.button == button &&
         other.card == card &&
         other.label == label &&
+        other.modal == modal &&
+        other.nav == nav &&
+        other.kanban == kanban &&
+        other.listItem == listItem &&
+        other.motion == motion &&
         other.spacingScale == spacingScale;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(name, inputText, button, card, label, spacingScale);
+  int get hashCode => Object.hash(
+    name,
+    inputText,
+    button,
+    card,
+    label,
+    modal,
+    nav,
+    kanban,
+    listItem,
+    motion,
+    spacingScale,
+  );
 
   @override
   String toString() => 'StylePack($name)';

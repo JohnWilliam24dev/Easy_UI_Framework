@@ -7,6 +7,20 @@ import 'package:flutter_test/flutter_test.dart';
 import '../support/pump_easy.dart';
 
 void main() {
+  testWidgets('builder cria itens sob demanda', (tester) async {
+    await pumpEasy(
+      tester,
+      Grid.builder(
+        minCell: 2,
+        maxCell: 2,
+        itemCount: 3,
+        itemBuilder: (_, index) => Text('item $index'),
+      ),
+    );
+    expect(find.text('item 0'), findsOneWidget);
+    expect(find.text('item 2'), findsOneWidget);
+  });
+
   testWidgets('colunas variam por interpolação, sem saltar de vez',
       (tester) async {
     Future<int> colunasEm(double largura) async {
