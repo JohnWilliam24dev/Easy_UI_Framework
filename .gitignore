@@ -120,3 +120,6 @@ app.*.symbols
 # IDEs
 .idea/
 *.iml
+
+# Python wheels
+*.whl
