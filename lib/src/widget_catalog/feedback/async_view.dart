@@ -44,7 +44,9 @@ class _AsyncViewState<T> extends State<AsyncView<T>> {
 
   void _reload() {
     final next = widget.load();
-    setState(() => _future = next);
+    setState(() {
+      _future = next;
+    });
   }
 
   @override
