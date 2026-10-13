@@ -16,7 +16,7 @@ class Reveal extends StatefulWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (var index = 0; index < children.length; index++)
-              Reveal(child: children[index], delay: interval * index),
+              Reveal(delay: interval * index, child: children[index]),
           ],
         );
       },

@@ -1,4 +1,5 @@
 import 'package:easy_ui/src/theme_layer/theme_layer.dart';
+import 'package:easy_ui/src/widget_catalog/app/easy_app.dart';
 import 'package:easy_ui/src/widget_catalog/app/material_bridge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

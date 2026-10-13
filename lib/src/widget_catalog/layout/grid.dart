@@ -99,10 +99,10 @@ class Grid extends StatelessWidget {
   final int? _itemCount;
   final NullableIndexedWidgetBuilder? _itemBuilder;
   int get _resolvedItemCount => _itemCount ?? children.length;
-  Widget _buildItem(BuildContext context, int index) =>
-      _itemBuilder == null
-          ? children[index]
-          : _itemBuilder!(context, index)!;
+  Widget _buildItem(BuildContext context, int index) {
+    final builder = _itemBuilder;
+    return builder == null ? children[index] : builder(context, index)!;
+  }
 
   @override
   Widget build(BuildContext context) {
