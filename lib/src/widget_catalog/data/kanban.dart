@@ -105,10 +105,15 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
     super.dispose();
   }
 
+  /// Chaves e controladores são por layout (desktop/celular). Com a mesma
+  /// chave nos dois, trocar de layout move a subárvore da coluna entre a linha
+  /// horizontal e o PageView (reparenting), o que quebra as dependências de
+  /// InheritedWidget ("is not our descendant"). Assim cada layout cria a sua.
+  String _slot(String id) => '${_mobile ? 'm' : 'd'}:$id';
   GlobalKey _key(Map<String, GlobalKey> map, String id) =>
-      map.putIfAbsent(id, GlobalKey.new);
+      map.putIfAbsent(_slot(id), GlobalKey.new);
   ScrollController _scroller(String id) =>
-      _listScrollers.putIfAbsent(id, ScrollController.new);
+      _listScrollers.putIfAbsent(_slot(id), ScrollController.new);
   Rect? _rect(GlobalKey key) {
     final box = key.currentContext?.findRenderObject();
     return box is RenderBox && box.hasSize
