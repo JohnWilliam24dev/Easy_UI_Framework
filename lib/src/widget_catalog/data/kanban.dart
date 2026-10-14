@@ -286,7 +286,18 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
   );
   Widget _desktopBoard(double height) {
     final spec = StylePackScope.of(context).kanban;
-    return SingleChildScrollView(
+    // No desktop e no tablet o quadro rola na horizontal: o mouse também
+    // arrasta o fundo (por padrão só toque e caneta arrastam) e a barra fica
+    // visível, para dar para ver as colunas que não cabem na tela.
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(
+        scrollbars: false,
+        dragDevices: PointerDeviceKind.values.toSet(),
+      ),
+      child: Scrollbar(
+        controller: _horizontal,
+        thumbVisibility: true,
+        child: SingleChildScrollView(
       controller: _horizontal,
       scrollDirection: Axis.horizontal,
       child: SizedBox(
@@ -304,6 +315,8 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
                 _columnPlaceholder(spec),
             ],
           ],
+        ),
+      ),
         ),
       ),
     );
