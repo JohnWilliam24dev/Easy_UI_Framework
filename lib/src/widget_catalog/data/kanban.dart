@@ -56,6 +56,7 @@ class KanbanBoard<T> extends StatefulWidget {
     this.onItemTap,
     this.onColumnMove,
     this.columnActionsBuilder,
+    this.columnHeaderBuilder,
     this.cardHeight = 112,
     this.emptyLabel = 'Nenhum item aqui',
   });
@@ -67,6 +68,12 @@ class KanbanBoard<T> extends StatefulWidget {
   final ValueChanged<KanbanColumnMove>? onColumnMove;
   final Widget Function(BuildContext, KanbanColumnData<T>, int)?
   columnActionsBuilder;
+
+  /// Substitui o cabeçalho padrão da coluna (título, contagem, ações e alça).
+  /// Recebe a alça de arrastar colunas (`null` no celular ou sem
+  /// [onColumnMove]); quem monta o cabeçalho decide onde ela aparece.
+  final Widget Function(BuildContext, KanbanColumnData<T>, int, Widget?)?
+  columnHeaderBuilder;
   final double cardHeight;
   final String emptyLabel;
   @override
@@ -324,9 +331,39 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
       ),
     ),
   );
+  Widget _tilt(double angle, Widget child) =>
+      angle == 0 ? child : Transform.rotate(angle: angle, child: child);
+  Widget _columnHandle(
+    KanbanColumnData<T> column,
+    double width,
+    KanbanStyleSpec spec,
+  ) =>
+      Draggable<String>(
+                        data: column.id,
+                        onDragStarted: () => _startColumn(column.id),
+                        onDragUpdate: (details) => _updateColumn(
+                          details.globalPosition,
+                          width + spec.gap,
+                        ),
+                        onDragEnd: (_) => _endColumn(),
+                        feedback: SizedBox(
+                          width: width,
+                          child: Card(
+                            child: Label(
+                              type: LabelType.heading,
+                              text: column.title,
+                            ),
+                          ),
+                        ),
+                        child: const Icon(Icons.drag_indicator),
+                      );
   Widget _column(KanbanColumnData<T> column, double width, bool mobile) {
     final spec = StylePackScope.of(context).kanban;
     final tokens = AppThemeScope.tokensOf(context);
+    final index = widget.columns.indexOf(column);
+    final handle = !mobile && widget.onColumnMove != null
+        ? _columnHandle(column, width, spec)
+        : null;
     return Offstage(
       offstage: _dragColumn == column.id,
       child: SizedBox(
@@ -342,7 +379,13 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
             ),
             child: Column(
               children: [
-                Row(
+                widget.columnHeaderBuilder?.call(
+                      context,
+                      column,
+                      index,
+                      handle,
+                    ) ??
+                    Row(
                   children: [
                     Expanded(
                       child: Label(
@@ -361,26 +404,7 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
                         column,
                         widget.columns.indexOf(column),
                       ),
-                    if (!mobile && widget.onColumnMove != null)
-                      Draggable<String>(
-                        data: column.id,
-                        onDragStarted: () => _startColumn(column.id),
-                        onDragUpdate: (details) => _updateColumn(
-                          details.globalPosition,
-                          width + spec.gap,
-                        ),
-                        onDragEnd: (_) => _endColumn(),
-                        feedback: SizedBox(
-                          width: width,
-                          child: Card(
-                            child: Label(
-                              type: LabelType.heading,
-                              text: column.title,
-                            ),
-                          ),
-                        ),
-                        child: const Icon(Icons.drag_indicator),
-                      ),
+                    if (handle != null) handle,
                   ],
                 ),
                 Expanded(
@@ -428,10 +452,13 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
               theme: theme,
               child: StylePackScope(
                 pack: pack,
-                child: SizedBox(
-                  width: width,
-                  height: widget.cardHeight,
-                  child: widget.itemBuilder(context, item),
+                child: _tilt(
+                  pack.kanban.dragTilt,
+                  SizedBox(
+                    width: width,
+                    height: widget.cardHeight,
+                    child: widget.itemBuilder(context, item),
+                  ),
                 ),
               ),
             ),

@@ -9,8 +9,13 @@ class KanbanStyleSpec {
     this.cardGap = 8,
     this.dragDelay = const Duration(milliseconds: 200),
     this.columnBackgroundOpacity = 0.06,
+    this.dragTilt = 0,
   });
   final double columnWidth, radius, gap, cardGap, columnBackgroundOpacity;
+
+  /// Inclinação (radianos) do card enquanto é arrastado, como no Trello.
+  /// 0 = sem inclinação. Algo como 0.035 (~2°) dá o efeito sutil.
+  final double dragTilt;
   final Duration dragDelay;
   @override
   bool operator ==(Object other) =>
@@ -20,8 +25,17 @@ class KanbanStyleSpec {
       other.gap == gap &&
       other.cardGap == cardGap &&
       other.dragDelay == dragDelay &&
-      other.columnBackgroundOpacity == columnBackgroundOpacity;
+      other.columnBackgroundOpacity == columnBackgroundOpacity &&
+      other.dragTilt == dragTilt;
   @override
   int get hashCode =>
-      Object.hash(columnWidth, radius, gap, cardGap, dragDelay, columnBackgroundOpacity);
+      Object.hash(
+        columnWidth,
+        radius,
+        gap,
+        cardGap,
+        dragDelay,
+        columnBackgroundOpacity,
+        dragTilt,
+      );
 }

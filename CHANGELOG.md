@@ -14,6 +14,8 @@
 * `Modal.sheet` (teclado, área segura e tema), `Modal.adaptive`, `Modal.choice(selected:)` e `Modal.form(adaptive:)`.
 * `Divider(spacing:)`, `Grid.builder`, `StylePack.glass` e `StylePack.operational`.
 * `AppThemeController.darkMode` acompanha o tema do sistema.
+* `KanbanStyleSpec.dragTilt`: inclina o card enquanto é arrastado (estilo Trello); 0 mantém o comportamento anterior.
+* `KanbanBoard.columnHeaderBuilder`: troca o cabeçalho da coluna e recebe a alça de arrastar colunas.
 * Testes para `KanbanBoard`, `AsyncView`, `AppShell`, `AuthPage`, `Menu`, `Tabs`, `PageDots`, `Reveal`, `optimistic` e gráficos.
 
 ## 0.0.1
