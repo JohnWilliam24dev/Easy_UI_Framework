@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:easy_ui/src/kernel/unit_system/unit_system.dart';
 import 'package:easy_ui/src/theme_layer/theme_layer.dart';
 import 'package:easy_ui/src/widget_catalog/data/kanban.dart';
@@ -31,10 +33,16 @@ Widget _board({
   );
 }
 
-/// Há algum Transform com rotação (seno do ângulo fora de zero) na árvore?
-Finder _rotacionado() => find.byWidgetPredicate(
-  (w) => w is Transform && w.transform.storage[1].abs() > 0.01,
-);
+const _inclinacao = 0.035;
+
+/// Transform rotacionado em exatamente [angulo] radianos. O Flutter usa
+/// Transforms de rotação em outros lugares, então só o ângulo exato
+/// identifica o card inclinado pelo [KanbanStyleSpec.dragTilt].
+Finder _inclinadoEm(double angulo) => find.byWidgetPredicate((w) {
+  if (w is! Transform) return false;
+  final m = w.transform.storage;
+  return (math.atan2(m[1], m[0]) - angulo).abs() < 1e-6;
+});
 
 Future<TestGesture> _arrastar(WidgetTester tester, String item) async {
   final gesture = await tester.startGesture(tester.getCenter(find.text(item)));
@@ -49,7 +57,7 @@ void main() {
     await pumpEasy(tester, _board());
 
     final gesture = await _arrastar(tester, 'a1');
-    expect(_rotacionado(), findsNothing);
+    expect(_inclinadoEm(_inclinacao), findsNothing);
 
     await gesture.up();
     await tester.pumpAndSettle();
@@ -63,16 +71,16 @@ void main() {
       _board(),
       pack: StylePack.define(
         name: 'tilt',
-        kanban: const KanbanStyleSpec(dragTilt: 0.035),
+        kanban: const KanbanStyleSpec(dragTilt: _inclinacao),
       ),
     );
 
     final gesture = await _arrastar(tester, 'a1');
-    expect(_rotacionado(), findsOneWidget);
+    expect(_inclinadoEm(_inclinacao), findsOneWidget);
 
     await gesture.up();
     await tester.pumpAndSettle();
-    expect(_rotacionado(), findsNothing);
+    expect(_inclinadoEm(_inclinacao), findsNothing);
   });
 
   testWidgets('columnHeaderBuilder substitui o cabeçalho e recebe a alça', (
