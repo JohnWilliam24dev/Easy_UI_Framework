@@ -145,7 +145,11 @@ class _ButtonState extends State<Button> {
   @override
   Widget build(BuildContext context) {
     final form = FormScope.maybeOf(context)?.controller;
-    final submit = widget.onSubmit ?? form?.onSubmit;
+    // O onSubmit do FormGroup só vale para botão sem ação própria: quem tem
+    // onPressed (ex.: Cancelar) não pode virar botão de envio.
+    final submit =
+        widget.onSubmit ??
+        (widget.onPressed == null ? form?.onSubmit : null);
     if (submit == null) return _buildButton(context, widget.onPressed);
     if (form == null) {
       throw FlutterError(

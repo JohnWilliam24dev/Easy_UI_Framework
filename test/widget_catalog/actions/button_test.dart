@@ -215,4 +215,29 @@ void main() {
       expect(find.text('Coluna com comissões'), findsOneWidget);
     });
   });
+
+  group('onPressed dentro de FormGroup com onSubmit', () {
+    testWidgets('botão com onPressed não vira botão de envio', (tester) async {
+      var enviou = false;
+      var cancelou = false;
+      await pumpEasy(
+        tester,
+        Tela(
+          child: FormGroup(
+            onSubmit: (_) {
+              enviou = true;
+            },
+            children: [
+              Button(text: 'Cancelar', onPressed: () => cancelou = true),
+            ],
+          ),
+        ),
+      );
+      await tester.tap(find.text('Cancelar'));
+      await tester.pump();
+
+      expect(cancelou, isTrue);
+      expect(enviou, isFalse);
+    });
+  });
 }
