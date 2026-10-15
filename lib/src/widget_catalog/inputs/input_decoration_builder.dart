@@ -26,7 +26,7 @@ InputDecoration buildInputDecoration({
 
   final restSide = kind == InputStyleKind.filled
       ? BorderSide.none
-      : BorderSide(color: tokens.borderColor);
+      : BorderSide(color: spec.borderColor ?? tokens.borderColor);
   final focusedSide = BorderSide(color: tokens.primaryColor, width: 2);
   final errorSide = BorderSide(color: tokens.errorColor);
   final focusedErrorSide = BorderSide(color: tokens.errorColor, width: 2);
