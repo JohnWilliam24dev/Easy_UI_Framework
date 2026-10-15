@@ -288,8 +288,9 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
   Widget _desktopBoard(double height) {
     final spec = StylePackScope.of(context).kanban;
     // No desktop e no tablet o quadro rola na horizontal: o mouse também
-    // arrasta o fundo (por padrão só toque e caneta arrastam) e a barra fica
-    // visível, para dar para ver as colunas que não cabem na tela.
+    // arrasta o fundo (por padrão só toque e caneta arrastam). A barra aparece
+    // ao rolar ou passar o mouse; fixa (thumbVisibility) ela mantém frames
+    // agendados e impede o pumpAndSettle dos testes de terminar.
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(
         scrollbars: false,
@@ -297,7 +298,6 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
       ),
       child: Scrollbar(
         controller: _horizontal,
-        thumbVisibility: true,
         child: SingleChildScrollView(
       controller: _horizontal,
       scrollDirection: Axis.horizontal,

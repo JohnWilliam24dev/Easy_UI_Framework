@@ -15,7 +15,7 @@
 * `Divider(spacing:)`, `Grid.builder`, `StylePack.glass` e `StylePack.operational`.
 * `AppThemeController.darkMode` acompanha o tema do sistema.
 * `KanbanStyleSpec.dragTilt`: inclina o card enquanto é arrastado (estilo Trello); 0 mantém o comportamento anterior.
-* `KanbanBoard` (desktop/tablet): o mouse e o trackpad arrastam o fundo para rolar na horizontal e a barra de rolagem fica visível; antes só toque e caneta rolavam.
+* `KanbanBoard` (desktop/tablet): o mouse e o trackpad arrastam o fundo para rolar na horizontal e a barra de rolagem aparece ao rolar ou passar o mouse; antes só toque e caneta rolavam.
 * `KanbanBoard`: chaves e rolagens por layout, para alternar desktop/celular não reaproveitar subárvores.
 * `KanbanBoard.columnHeaderBuilder`: troca o cabeçalho da coluna e recebe a alça de arrastar colunas.
 * Testes para `KanbanBoard`, `AsyncView`, `AppShell`, `AuthPage`, `Menu`, `Tabs`, `PageDots`, `Reveal`, `optimistic` e gráficos.
