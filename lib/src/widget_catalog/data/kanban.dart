@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart' hide Card;
@@ -323,24 +324,44 @@ class _KanbanBoardState<T> extends State<KanbanBoard<T>> {
     );
   }
 
-  Widget _mobileBoard(double width) => Column(
-    children: [
-      Expanded(
-        child: PageView(
-          controller: _pages,
-          children: [
-            for (final column in widget.columns)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                child: _column(column, width * .9 - 24, true),
-              ),
-          ],
+  Widget _mobileBoard(double width) {
+    final spec = StylePackScope.of(context).kanban;
+    // Numa janela larga o bastante para a coluna "de verdade", a coluna não
+    // passa de [KanbanStyleSpec.columnWidth]: centralizada na página, em vez
+    // de esticar até a borda.
+    final columnWidth = math.min(width * .9 - 24, spec.columnWidth);
+    return Column(
+      children: [
+        Expanded(
+          // Por padrão só toque e caneta arrastam o PageView; o mouse
+          // (janela estreita no navegador, tablet simulado) também.
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(
+              context,
+            ).copyWith(dragDevices: PointerDeviceKind.values.toSet()),
+            child: PageView(
+              controller: _pages,
+              children: [
+                for (final column in widget.columns)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 8,
+                    ),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: _column(column, columnWidth, true),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
-      ),
-      const SizedBox(height: 8),
-      PageDots(controller: _pages, count: widget.columns.length),
-    ],
-  );
+        const SizedBox(height: 8),
+        PageDots(controller: _pages, count: widget.columns.length),
+      ],
+    );
+  }
   Widget _columnPlaceholder(KanbanStyleSpec spec) => SizedBox(
     width: spec.columnWidth,
     child: DecoratedBox(

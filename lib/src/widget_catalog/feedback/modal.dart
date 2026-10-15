@@ -10,7 +10,6 @@ import '../actions/button.dart';
 import '../display/card.dart';
 import '../display/label.dart';
 import '../display/list_item.dart';
-import '../layout/div.dart';
 import '../inputs/form/form_group.dart';
 import '../inputs/form/form_submit_error.dart';
 import '../inputs/form/validators.dart';
@@ -308,22 +307,35 @@ class _ModalShell extends StatelessWidget {
     return Dialog(
       backgroundColor: const Color(0x00000000),
       child: Card(
-        child: Div(
-          width: 320.px,
-          children: [
-            Label(type: LabelType.subtitle, text: title),
-            if (message != null) Label(type: LabelType.body, text: message!),
-            ?content,
-            // Wrap, não Div/Row: com textos maiores (localização, fonte
-            // maior por acessibilidade) os botões quebram linha em vez de
-            // estourar a largura fixa do modal.
-            Wrap(
-              alignment: WrapAlignment.end,
-              spacing: 8,
-              runSpacing: 8,
-              children: actions,
-            ),
-          ],
+        // Column com mainAxisSize.min (e não Div, que ocupa a altura toda):
+        // o diálogo tem a altura do conteúdo, sem sobra em branco embaixo.
+        child: SizedBox(
+          width: 320,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Label(type: LabelType.subtitle, text: title),
+              if (message != null) ...[
+                const SizedBox(height: 16),
+                Label(type: LabelType.body, text: message!),
+              ],
+              if (content != null) ...[
+                const SizedBox(height: 16),
+                content!,
+              ],
+              if (actions.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                // Wrap, não Div/Row: com textos maiores (localização, fonte
+                // maior por acessibilidade) os botões quebram linha em vez
+                // de estourar a largura fixa do modal.
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(spacing: 8, runSpacing: 8, children: actions),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
